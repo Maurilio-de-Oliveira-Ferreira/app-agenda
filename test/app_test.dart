@@ -2,6 +2,7 @@ import 'package:app_agenda/data/database.dart';
 import 'package:app_agenda/data/providers.dart';
 import 'package:app_agenda/main.dart';
 import 'package:app_agenda/notificacoes/agendador.dart';
+import 'package:app_agenda/ui/item_form_page.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,6 +85,45 @@ void main() {
     await tester.tap(find.byType(Checkbox));
     await tester.pumpAndSettle();
     expect(agendador.sincronizados, isEmpty);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('lembrete de evento avisa um dia antes e acompanha o início', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final daquiUmMes = DateTime.now().add(const Duration(days: 30));
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [databaseProvider.overrideWithValue(db), agendadorProvider.overrideWithValue(AgendadorDeTeste())],
+      child: MaterialApp(home: ItemFormPage(tipo: TipoItem.evento, diaInicial: daquiUmMes)),
+    ));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Título'), 'Consulta');
+    await tester.tap(find.text('Lembrete'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Na hora'));
+    await tester.pumpAndSettle();
+    expect(find.text('2 horas antes'), findsOneWidget);
+    expect(find.text('1 semana antes'), findsOneWidget);
+    await tester.tap(find.text('1 dia antes').last);
+    await tester.pumpAndSettle();
+
+    // No dia inteiro o aviso passa para as 9h do dia anterior.
+    await tester.tap(find.text('Dia inteiro'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 dia antes'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Salvar'));
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    final item = (await db.select(db.itens).get()).single;
+    final lembrete = (await db.lembreteDoItem(item.id))!;
+    final vespera = item.inicio!.subtract(const Duration(days: 1));
+    expect(lembrete.quando, DateTime(vespera.year, vespera.month, vespera.day, 9));
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
