@@ -10,13 +10,15 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../data/database.dart';
 import '../util/datas.dart';
+import '../whatsapp/whatsapp.dart';
 import 'repeticao.dart';
 
 /// Agenda e cancela as notificações dos lembretes.
 ///
 /// Os testes usam [AgendadorDeTeste], que só guarda o que seria agendado.
 abstract class Agendador {
-  Future<void> iniciar({void Function(int itemId)? aoAbrirItem});
+  /// [aoAbrirWhatsApp] recebe o link do botão "Enviar no WhatsApp".
+  Future<void> iniciar({void Function(int itemId)? aoAbrirItem, void Function(Uri link)? aoAbrirWhatsApp});
 
   /// Pede ao Android permissão para mostrar notificações. Devolve se pode.
   Future<bool> pedirPermissao();
@@ -25,12 +27,14 @@ abstract class Agendador {
   Future<void> sincronizar(List<LembreteComItem> lembretes);
 
   /// Item da notificação que abriu o app, se ele foi aberto por uma.
+  /// Se foi pelo botão do WhatsApp, abre o WhatsApp e devolve nulo.
   Future<int?> itemQueAbriuOApp();
 }
 
 /// Ações dos botões da notificação.
 const _acaoAdiar = 'adiar';
 const _acaoConcluir = 'concluir';
+const _acaoWhatsApp = 'whatsapp';
 
 /// Cada lembrete usa um bloco de ids de notificação: os primeiros para as
 /// próximas ocorrências e o último para a soneca.
@@ -54,14 +58,24 @@ class AgendadorLocal implements Agendador {
   AndroidFlutterLocalNotificationsPlugin? get _android =>
       _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
+  void Function(Uri link)? _aoAbrirWhatsApp;
+
   @override
-  Future<void> iniciar({void Function(int itemId)? aoAbrirItem}) async {
+  Future<void> iniciar({void Function(int itemId)? aoAbrirItem, void Function(Uri link)? aoAbrirWhatsApp}) async {
+    _aoAbrirWhatsApp = aoAbrirWhatsApp;
     await _prepararPlugin(
       _plugin,
       aoTocar: (resposta) async {
-        // Toque na notificação (sem botão): abre a tarefa ou o evento.
         final dados = _Dados.ler(resposta.payload);
-        if (dados != null && resposta.actionId == null) aoAbrirItem?.call(dados.itemId);
+        if (dados == null) return;
+        switch (resposta.actionId) {
+          // Toque na notificação (sem botão): abre a tarefa ou o evento.
+          case null:
+            aoAbrirItem?.call(dados.itemId);
+          case _acaoWhatsApp:
+            final link = dados.whatsapp;
+            if (link != null) aoAbrirWhatsApp?.call(link);
+        }
       },
     );
   }
@@ -77,7 +91,14 @@ class AgendadorLocal implements Agendador {
   Future<int?> itemQueAbriuOApp() async {
     final detalhes = await _plugin.getNotificationAppLaunchDetails();
     if (detalhes == null || !detalhes.didNotificationLaunchApp) return null;
-    return _Dados.ler(detalhes.notificationResponse?.payload)?.itemId;
+    final resposta = detalhes.notificationResponse;
+    final dados = _Dados.ler(resposta?.payload);
+    if (resposta?.actionId == _acaoWhatsApp) {
+      final link = dados?.whatsapp;
+      if (link != null) _aoAbrirWhatsApp?.call(link);
+      return null;
+    }
+    return dados?.itemId;
   }
 
   /// Uma sincronização de cada vez, na ordem em que foram pedidas.
@@ -183,6 +204,9 @@ Future<void> _agendar(
         actions: [
           AndroidNotificationAction(_acaoAdiar, 'Adiar ${dados.sonecaMinutos} min'),
           if (dados.tarefa) const AndroidNotificationAction(_acaoConcluir, 'Concluir'),
+          // Precisa abrir o app para ele poder abrir o WhatsApp.
+          if (dados.whatsapp != null)
+            const AndroidNotificationAction(_acaoWhatsApp, 'Enviar no WhatsApp', showsUserInterface: true),
         ],
       ),
     ),
@@ -237,6 +261,7 @@ class _Dados {
     required this.tarefa,
     required this.sonecaMinutos,
     this.imagem,
+    this.whatsapp,
   });
 
   factory _Dados.de(LembreteComItem l, String pastaAnexos) {
@@ -262,6 +287,7 @@ class _Dados {
       tarefa: item.tipo == TipoItem.tarefa,
       sonecaMinutos: l.lembrete.sonecaMinutos,
       imagem: l.imagem == null ? null : '$pastaAnexos/${l.imagem}',
+      whatsapp: linkDoLembrete(l),
     );
   }
 
@@ -277,6 +303,7 @@ class _Dados {
         tarefa: m['tarefa'] as bool,
         sonecaMinutos: m['soneca'] as int,
         imagem: m['imagem'] as String?,
+        whatsapp: m['whatsapp'] == null ? null : Uri.parse(m['whatsapp'] as String),
       );
     } catch (_) {
       return null;
@@ -293,6 +320,9 @@ class _Dados {
   /// Caminho completo da foto mostrada na notificação.
   final String? imagem;
 
+  /// Link do botão "Enviar no WhatsApp", se o lembrete tiver um.
+  final Uri? whatsapp;
+
   String json() => jsonEncode({
     'item': itemId,
     'lembrete': lembreteId,
@@ -301,6 +331,7 @@ class _Dados {
     'tarefa': tarefa,
     'soneca': sonecaMinutos,
     'imagem': imagem,
+    'whatsapp': whatsapp?.toString(),
   });
 }
 
@@ -309,7 +340,7 @@ class AgendadorDeTeste implements Agendador {
   List<LembreteComItem> sincronizados = [];
 
   @override
-  Future<void> iniciar({void Function(int itemId)? aoAbrirItem}) async {}
+  Future<void> iniciar({void Function(int itemId)? aoAbrirItem, void Function(Uri link)? aoAbrirWhatsApp}) async {}
 
   @override
   Future<bool> pedirPermissao() async => true;

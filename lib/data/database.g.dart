@@ -626,6 +626,43 @@ class $LembretesTable extends Lembretes
     requiredDuringInsert: false,
     defaultValue: const Constant(10),
   );
+  static const VerificationMeta _whatsappMeta = const VerificationMeta(
+    'whatsapp',
+  );
+  @override
+  late final GeneratedColumn<bool> whatsapp = GeneratedColumn<bool>(
+    'whatsapp',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("whatsapp" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _whatsappNumeroMeta = const VerificationMeta(
+    'whatsappNumero',
+  );
+  @override
+  late final GeneratedColumn<String> whatsappNumero = GeneratedColumn<String>(
+    'whatsapp_numero',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _whatsappMensagemMeta = const VerificationMeta(
+    'whatsappMensagem',
+  );
+  @override
+  late final GeneratedColumn<String> whatsappMensagem = GeneratedColumn<String>(
+    'whatsapp_mensagem',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -634,6 +671,9 @@ class $LembretesTable extends Lembretes
     frequencia,
     intervalo,
     sonecaMinutos,
+    whatsapp,
+    whatsappNumero,
+    whatsappMensagem,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -681,6 +721,30 @@ class $LembretesTable extends Lembretes
         ),
       );
     }
+    if (data.containsKey('whatsapp')) {
+      context.handle(
+        _whatsappMeta,
+        whatsapp.isAcceptableOrUnknown(data['whatsapp']!, _whatsappMeta),
+      );
+    }
+    if (data.containsKey('whatsapp_numero')) {
+      context.handle(
+        _whatsappNumeroMeta,
+        whatsappNumero.isAcceptableOrUnknown(
+          data['whatsapp_numero']!,
+          _whatsappNumeroMeta,
+        ),
+      );
+    }
+    if (data.containsKey('whatsapp_mensagem')) {
+      context.handle(
+        _whatsappMensagemMeta,
+        whatsappMensagem.isAcceptableOrUnknown(
+          data['whatsapp_mensagem']!,
+          _whatsappMensagemMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -716,6 +780,18 @@ class $LembretesTable extends Lembretes
         DriftSqlType.int,
         data['${effectivePrefix}soneca_minutos'],
       )!,
+      whatsapp: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}whatsapp'],
+      )!,
+      whatsappNumero: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}whatsapp_numero'],
+      ),
+      whatsappMensagem: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}whatsapp_mensagem'],
+      ),
     );
   }
 
@@ -737,6 +813,15 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
 
   /// Quantos minutos o botão "Adiar" da notificação espera.
   final int sonecaMinutos;
+
+  /// Mostra na notificação o botão que abre o WhatsApp com uma mensagem pronta.
+  final bool whatsapp;
+
+  /// Para quem vai a mensagem. Vazio: o WhatsApp pede para escolher o contato.
+  final String? whatsappNumero;
+
+  /// Texto da mensagem. Vazio: vai o título e o horário da tarefa ou do evento.
+  final String? whatsappMensagem;
   const Lembrete({
     required this.id,
     required this.itemId,
@@ -744,6 +829,9 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
     required this.frequencia,
     required this.intervalo,
     required this.sonecaMinutos,
+    required this.whatsapp,
+    this.whatsappNumero,
+    this.whatsappMensagem,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -758,6 +846,13 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
     }
     map['intervalo'] = Variable<int>(intervalo);
     map['soneca_minutos'] = Variable<int>(sonecaMinutos);
+    map['whatsapp'] = Variable<bool>(whatsapp);
+    if (!nullToAbsent || whatsappNumero != null) {
+      map['whatsapp_numero'] = Variable<String>(whatsappNumero);
+    }
+    if (!nullToAbsent || whatsappMensagem != null) {
+      map['whatsapp_mensagem'] = Variable<String>(whatsappMensagem);
+    }
     return map;
   }
 
@@ -769,6 +864,13 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
       frequencia: Value(frequencia),
       intervalo: Value(intervalo),
       sonecaMinutos: Value(sonecaMinutos),
+      whatsapp: Value(whatsapp),
+      whatsappNumero: whatsappNumero == null && nullToAbsent
+          ? const Value.absent()
+          : Value(whatsappNumero),
+      whatsappMensagem: whatsappMensagem == null && nullToAbsent
+          ? const Value.absent()
+          : Value(whatsappMensagem),
     );
   }
 
@@ -786,6 +888,9 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
       ),
       intervalo: serializer.fromJson<int>(json['intervalo']),
       sonecaMinutos: serializer.fromJson<int>(json['sonecaMinutos']),
+      whatsapp: serializer.fromJson<bool>(json['whatsapp']),
+      whatsappNumero: serializer.fromJson<String?>(json['whatsappNumero']),
+      whatsappMensagem: serializer.fromJson<String?>(json['whatsappMensagem']),
     );
   }
   @override
@@ -800,6 +905,9 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
       ),
       'intervalo': serializer.toJson<int>(intervalo),
       'sonecaMinutos': serializer.toJson<int>(sonecaMinutos),
+      'whatsapp': serializer.toJson<bool>(whatsapp),
+      'whatsappNumero': serializer.toJson<String?>(whatsappNumero),
+      'whatsappMensagem': serializer.toJson<String?>(whatsappMensagem),
     };
   }
 
@@ -810,6 +918,9 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
     Frequencia? frequencia,
     int? intervalo,
     int? sonecaMinutos,
+    bool? whatsapp,
+    Value<String?> whatsappNumero = const Value.absent(),
+    Value<String?> whatsappMensagem = const Value.absent(),
   }) => Lembrete(
     id: id ?? this.id,
     itemId: itemId ?? this.itemId,
@@ -817,6 +928,13 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
     frequencia: frequencia ?? this.frequencia,
     intervalo: intervalo ?? this.intervalo,
     sonecaMinutos: sonecaMinutos ?? this.sonecaMinutos,
+    whatsapp: whatsapp ?? this.whatsapp,
+    whatsappNumero: whatsappNumero.present
+        ? whatsappNumero.value
+        : this.whatsappNumero,
+    whatsappMensagem: whatsappMensagem.present
+        ? whatsappMensagem.value
+        : this.whatsappMensagem,
   );
   Lembrete copyWithCompanion(LembretesCompanion data) {
     return Lembrete(
@@ -830,6 +948,13 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
       sonecaMinutos: data.sonecaMinutos.present
           ? data.sonecaMinutos.value
           : this.sonecaMinutos,
+      whatsapp: data.whatsapp.present ? data.whatsapp.value : this.whatsapp,
+      whatsappNumero: data.whatsappNumero.present
+          ? data.whatsappNumero.value
+          : this.whatsappNumero,
+      whatsappMensagem: data.whatsappMensagem.present
+          ? data.whatsappMensagem.value
+          : this.whatsappMensagem,
     );
   }
 
@@ -841,14 +966,26 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
           ..write('quando: $quando, ')
           ..write('frequencia: $frequencia, ')
           ..write('intervalo: $intervalo, ')
-          ..write('sonecaMinutos: $sonecaMinutos')
+          ..write('sonecaMinutos: $sonecaMinutos, ')
+          ..write('whatsapp: $whatsapp, ')
+          ..write('whatsappNumero: $whatsappNumero, ')
+          ..write('whatsappMensagem: $whatsappMensagem')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, itemId, quando, frequencia, intervalo, sonecaMinutos);
+  int get hashCode => Object.hash(
+    id,
+    itemId,
+    quando,
+    frequencia,
+    intervalo,
+    sonecaMinutos,
+    whatsapp,
+    whatsappNumero,
+    whatsappMensagem,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -858,7 +995,10 @@ class Lembrete extends DataClass implements Insertable<Lembrete> {
           other.quando == this.quando &&
           other.frequencia == this.frequencia &&
           other.intervalo == this.intervalo &&
-          other.sonecaMinutos == this.sonecaMinutos);
+          other.sonecaMinutos == this.sonecaMinutos &&
+          other.whatsapp == this.whatsapp &&
+          other.whatsappNumero == this.whatsappNumero &&
+          other.whatsappMensagem == this.whatsappMensagem);
 }
 
 class LembretesCompanion extends UpdateCompanion<Lembrete> {
@@ -868,6 +1008,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
   final Value<Frequencia> frequencia;
   final Value<int> intervalo;
   final Value<int> sonecaMinutos;
+  final Value<bool> whatsapp;
+  final Value<String?> whatsappNumero;
+  final Value<String?> whatsappMensagem;
   const LembretesCompanion({
     this.id = const Value.absent(),
     this.itemId = const Value.absent(),
@@ -875,6 +1018,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
     this.frequencia = const Value.absent(),
     this.intervalo = const Value.absent(),
     this.sonecaMinutos = const Value.absent(),
+    this.whatsapp = const Value.absent(),
+    this.whatsappNumero = const Value.absent(),
+    this.whatsappMensagem = const Value.absent(),
   });
   LembretesCompanion.insert({
     this.id = const Value.absent(),
@@ -883,6 +1029,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
     this.frequencia = const Value.absent(),
     this.intervalo = const Value.absent(),
     this.sonecaMinutos = const Value.absent(),
+    this.whatsapp = const Value.absent(),
+    this.whatsappNumero = const Value.absent(),
+    this.whatsappMensagem = const Value.absent(),
   }) : itemId = Value(itemId),
        quando = Value(quando);
   static Insertable<Lembrete> custom({
@@ -892,6 +1041,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
     Expression<int>? frequencia,
     Expression<int>? intervalo,
     Expression<int>? sonecaMinutos,
+    Expression<bool>? whatsapp,
+    Expression<String>? whatsappNumero,
+    Expression<String>? whatsappMensagem,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -900,6 +1052,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
       if (frequencia != null) 'frequencia': frequencia,
       if (intervalo != null) 'intervalo': intervalo,
       if (sonecaMinutos != null) 'soneca_minutos': sonecaMinutos,
+      if (whatsapp != null) 'whatsapp': whatsapp,
+      if (whatsappNumero != null) 'whatsapp_numero': whatsappNumero,
+      if (whatsappMensagem != null) 'whatsapp_mensagem': whatsappMensagem,
     });
   }
 
@@ -910,6 +1065,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
     Value<Frequencia>? frequencia,
     Value<int>? intervalo,
     Value<int>? sonecaMinutos,
+    Value<bool>? whatsapp,
+    Value<String?>? whatsappNumero,
+    Value<String?>? whatsappMensagem,
   }) {
     return LembretesCompanion(
       id: id ?? this.id,
@@ -918,6 +1076,9 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
       frequencia: frequencia ?? this.frequencia,
       intervalo: intervalo ?? this.intervalo,
       sonecaMinutos: sonecaMinutos ?? this.sonecaMinutos,
+      whatsapp: whatsapp ?? this.whatsapp,
+      whatsappNumero: whatsappNumero ?? this.whatsappNumero,
+      whatsappMensagem: whatsappMensagem ?? this.whatsappMensagem,
     );
   }
 
@@ -944,6 +1105,15 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
     if (sonecaMinutos.present) {
       map['soneca_minutos'] = Variable<int>(sonecaMinutos.value);
     }
+    if (whatsapp.present) {
+      map['whatsapp'] = Variable<bool>(whatsapp.value);
+    }
+    if (whatsappNumero.present) {
+      map['whatsapp_numero'] = Variable<String>(whatsappNumero.value);
+    }
+    if (whatsappMensagem.present) {
+      map['whatsapp_mensagem'] = Variable<String>(whatsappMensagem.value);
+    }
     return map;
   }
 
@@ -955,7 +1125,10 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
           ..write('quando: $quando, ')
           ..write('frequencia: $frequencia, ')
           ..write('intervalo: $intervalo, ')
-          ..write('sonecaMinutos: $sonecaMinutos')
+          ..write('sonecaMinutos: $sonecaMinutos, ')
+          ..write('whatsapp: $whatsapp, ')
+          ..write('whatsappNumero: $whatsappNumero, ')
+          ..write('whatsappMensagem: $whatsappMensagem')
           ..write(')'))
         .toString();
   }
@@ -2520,6 +2693,9 @@ typedef $$LembretesTableCreateCompanionBuilder = LembretesCompanion Function({
   Value<Frequencia> frequencia,
   Value<int> intervalo,
   Value<int> sonecaMinutos,
+  Value<bool> whatsapp,
+  Value<String?> whatsappNumero,
+  Value<String?> whatsappMensagem,
 });
 typedef $$LembretesTableUpdateCompanionBuilder = LembretesCompanion Function({
   Value<int> id,
@@ -2528,6 +2704,9 @@ typedef $$LembretesTableUpdateCompanionBuilder = LembretesCompanion Function({
   Value<Frequencia> frequencia,
   Value<int> intervalo,
   Value<int> sonecaMinutos,
+  Value<bool> whatsapp,
+  Value<String?> whatsappNumero,
+  Value<String?> whatsappMensagem,
 });
 
 final class $$LembretesTableReferences
@@ -2584,6 +2763,21 @@ class $$LembretesTableFilterComposer
 
   ColumnFilters<int> get sonecaMinutos => $composableBuilder(
     column: $table.sonecaMinutos,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get whatsapp => $composableBuilder(
+    column: $table.whatsapp,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get whatsappNumero => $composableBuilder(
+    column: $table.whatsappNumero,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get whatsappMensagem => $composableBuilder(
+    column: $table.whatsappMensagem,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2645,6 +2839,21 @@ class $$LembretesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get whatsapp => $composableBuilder(
+    column: $table.whatsapp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get whatsappNumero => $composableBuilder(
+    column: $table.whatsappNumero,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get whatsappMensagem => $composableBuilder(
+    column: $table.whatsappMensagem,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ItensTableOrderingComposer get itemId {
     final $$ItensTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2695,6 +2904,19 @@ class $$LembretesTableAnnotationComposer
 
   GeneratedColumn<int> get sonecaMinutos => $composableBuilder(
     column: $table.sonecaMinutos,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get whatsapp =>
+      $composableBuilder(column: $table.whatsapp, builder: (column) => column);
+
+  GeneratedColumn<String> get whatsappNumero => $composableBuilder(
+    column: $table.whatsappNumero,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get whatsappMensagem => $composableBuilder(
+    column: $table.whatsappMensagem,
     builder: (column) => column,
   );
 
@@ -2756,6 +2978,9 @@ class $$LembretesTableTableManager
                 Value<Frequencia> frequencia = const Value.absent(),
                 Value<int> intervalo = const Value.absent(),
                 Value<int> sonecaMinutos = const Value.absent(),
+                Value<bool> whatsapp = const Value.absent(),
+                Value<String?> whatsappNumero = const Value.absent(),
+                Value<String?> whatsappMensagem = const Value.absent(),
               }) => LembretesCompanion(
                 id: id,
                 itemId: itemId,
@@ -2763,6 +2988,9 @@ class $$LembretesTableTableManager
                 frequencia: frequencia,
                 intervalo: intervalo,
                 sonecaMinutos: sonecaMinutos,
+                whatsapp: whatsapp,
+                whatsappNumero: whatsappNumero,
+                whatsappMensagem: whatsappMensagem,
               ),
           createCompanionCallback:
               ({
@@ -2772,6 +3000,9 @@ class $$LembretesTableTableManager
                 Value<Frequencia> frequencia = const Value.absent(),
                 Value<int> intervalo = const Value.absent(),
                 Value<int> sonecaMinutos = const Value.absent(),
+                Value<bool> whatsapp = const Value.absent(),
+                Value<String?> whatsappNumero = const Value.absent(),
+                Value<String?> whatsappMensagem = const Value.absent(),
               }) => LembretesCompanion.insert(
                 id: id,
                 itemId: itemId,
@@ -2779,6 +3010,9 @@ class $$LembretesTableTableManager
                 frequencia: frequencia,
                 intervalo: intervalo,
                 sonecaMinutos: sonecaMinutos,
+                whatsapp: whatsapp,
+                whatsappNumero: whatsappNumero,
+                whatsappMensagem: whatsappMensagem,
               ),
           withReferenceMapper: (p0) => p0
               .map(
