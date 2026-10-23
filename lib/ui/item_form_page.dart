@@ -8,6 +8,7 @@ import '../data/database.dart';
 import '../data/providers.dart';
 import '../notificacoes/repeticao.dart';
 import '../util/datas.dart';
+import '../whatsapp/whatsapp.dart';
 
 /// Tela para criar ou editar uma tarefa ou um evento.
 class ItemFormPage extends ConsumerStatefulWidget {
@@ -49,6 +50,9 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
   Frequencia _frequencia = Frequencia.nenhuma;
   final _intervalo = TextEditingController(text: '1');
   int _soneca = 10;
+  bool _whatsapp = false;
+  final _whatsappNumero = TextEditingController();
+  final _whatsappMensagem = TextEditingController();
 
   /// Anexos como estão na tela, como estavam no banco e os arquivos criados
   /// nesta edição (apagados se a pessoa sair sem salvar).
@@ -112,6 +116,9 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       _frequencia = l.frequencia;
       _intervalo.text = '${l.intervalo}';
       _soneca = l.sonecaMinutos;
+      _whatsapp = l.whatsapp;
+      _whatsappNumero.text = l.whatsappNumero ?? '';
+      _whatsappMensagem.text = l.whatsappMensagem ?? '';
     });
   }
 
@@ -135,6 +142,8 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     _titulo.dispose();
     _descricao.dispose();
     _intervalo.dispose();
+    _whatsappNumero.dispose();
+    _whatsappMensagem.dispose();
     super.dispose();
   }
 
@@ -151,6 +160,11 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       appBar: AppBar(
         title: Text(_editando ? 'Editar $nome' : (_evento ? 'Novo evento' : 'Nova tarefa')),
         actions: [
+          IconButton(
+            tooltip: 'Enviar pelo WhatsApp',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: _enviarPeloWhatsApp,
+          ),
           if (_editando)
             IconButton(
               tooltip: 'Excluir',
@@ -332,25 +346,86 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             ],
             onChanged: (m) => setState(() => _soneca = m!),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            secondary: const Icon(Icons.chat_outlined),
+            title: const Text('Mensagem no WhatsApp'),
+            subtitle: const Text('A notificação ganha um botão que abre o WhatsApp com a mensagem pronta'),
+            value: _whatsapp,
+            onChanged: (v) => setState(() => _whatsapp = v),
+          ),
+          if (_whatsapp) ...[
+            TextFormField(
+              controller: _whatsappNumero,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Telefone com DDD (opcional)',
+                helperText: 'Vazio: você escolhe o contato na hora',
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) {
+                final numero = v?.trim() ?? '';
+                return numero.isEmpty || numeroParaWhatsApp(numero) != null ? null : 'Telefone inválido';
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _whatsappMensagem,
+              minLines: 1,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Mensagem (opcional)',
+                helperText: 'Vazio: vai o título e o horário',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
         ],
       ];
+
+  /// Abre o WhatsApp com a tarefa ou o evento como está na tela.
+  Future<void> _enviarPeloWhatsApp() async {
+    if (_titulo.text.trim().isEmpty) {
+      _form.currentState!.validate();
+      return;
+    }
+    final (:inicio, :fim) = _periodo();
+    final descricao = _descricao.text.trim();
+    final item = Item(
+      id: widget.item?.id ?? 0,
+      tipo: widget.tipo,
+      titulo: _titulo.text.trim(),
+      descricao: descricao.isEmpty ? null : descricao,
+      inicio: inicio,
+      fim: fim,
+      diaInteiro: _evento && _diaInteiro,
+      concluida: widget.item?.concluida ?? false,
+      criadoEm: widget.item?.criadoEm ?? DateTime.now(),
+    );
+    await abrirWhatsApp(linkDoWhatsApp(textoDoItem(item)), context: context);
+  }
+
+  /// Início e fim como são gravados no banco.
+  ({DateTime? inicio, DateTime? fim}) _periodo() {
+    if (_evento) {
+      return (
+        inicio: _diaInteiro ? inicioDoDia(_inicio) : _inicio,
+        fim: _diaInteiro ? fimDoDia(_fim) : _fim,
+      );
+    }
+    return (inicio: _temPrazo ? _inicio : null, fim: null);
+  }
 
   Future<void> _salvar() async {
     if (!_form.currentState!.validate()) return;
 
-    DateTime? inicio;
-    DateTime? fim;
-    if (_evento) {
-      inicio = _diaInteiro ? inicioDoDia(_inicio) : _inicio;
-      fim = _diaInteiro ? fimDoDia(_fim) : _fim;
-      if (fim.isBefore(inicio)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('O fim precisa ser depois do início.')),
-        );
-        return;
-      }
-    } else if (_temPrazo) {
-      inicio = _inicio;
+    final (:inicio, :fim) = _periodo();
+    if (_evento && fim!.isBefore(inicio!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O fim precisa ser depois do início.')),
+      );
+      return;
     }
 
     final intervalo = int.tryParse(_intervalo.text) ?? 1;
@@ -388,6 +463,9 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
               frequencia: Value(_frequencia),
               intervalo: Value(_frequencia == Frequencia.nenhuma ? 1 : intervalo),
               sonecaMinutos: Value(_soneca),
+              whatsapp: Value(_whatsapp),
+              whatsappNumero: Value(_whatsapp ? _textoOuNulo(_whatsappNumero) : null),
+              whatsappMensagem: Value(_whatsapp ? _textoOuNulo(_whatsappMensagem) : null),
             )
           : null,
     );
@@ -405,6 +483,11 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       if (!_anexos.contains(a)) await _midia.apagar(a.arquivo);
     }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  static String? _textoOuNulo(TextEditingController c) {
+    final texto = c.text.trim();
+    return texto.isEmpty ? null : texto;
   }
 
   Future<void> _excluir() async {

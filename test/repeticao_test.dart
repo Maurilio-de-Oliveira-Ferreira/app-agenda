@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   Lembrete lembrete(DateTime quando, [Frequencia f = Frequencia.nenhuma, int intervalo = 1]) =>
-      Lembrete(id: 1, itemId: 1, quando: quando, frequencia: f, intervalo: intervalo, sonecaMinutos: 10);
+      Lembrete(id: 1, itemId: 1, quando: quando, frequencia: f, intervalo: intervalo, sonecaMinutos: 10, whatsapp: false);
 
   final agora = DateTime(2026, 10, 23, 12, 0);
 

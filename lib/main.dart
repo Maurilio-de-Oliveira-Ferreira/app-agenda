@@ -9,6 +9,7 @@ import 'data/providers.dart';
 import 'notificacoes/agendador.dart';
 import 'ui/home_page.dart';
 import 'ui/navegacao.dart';
+import 'whatsapp/whatsapp.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ Future<void> main() async {
   ]);
   await container.read(agendadorProvider).iniciar(
         aoAbrirItem: (id) => abrirItem(container.read(databaseProvider), id),
+        aoAbrirWhatsApp: abrirWhatsApp,
       );
 
   // Fotos e gravações de itens que já foram excluídos.

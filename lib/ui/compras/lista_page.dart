@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/database.dart';
 import '../../data/providers.dart';
+import '../../whatsapp/whatsapp.dart';
 import 'dialogos.dart';
 
 /// Uma lista de compras: marcar o que já foi comprado e adicionar produtos.
@@ -78,6 +79,15 @@ class _ListaPageState extends ConsumerState<ListaPage> {
       appBar: AppBar(
         title: Text(lista?.nome ?? ''),
         actions: [
+          if (lista != null)
+            IconButton(
+              tooltip: 'Enviar pelo WhatsApp',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: () => abrirWhatsApp(
+                linkDoWhatsApp(textoDaLista(lista, produtos.value ?? const [])),
+                context: context,
+              ),
+            ),
           if (lista != null)
             PopupMenuButton<_Acao>(
               tooltip: 'Mais opções',

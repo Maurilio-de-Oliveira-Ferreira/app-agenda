@@ -39,6 +39,15 @@ class Lembretes extends Table {
 
   /// Quantos minutos o botão "Adiar" da notificação espera.
   IntColumn get sonecaMinutos => integer().withDefault(const Constant(10))();
+
+  /// Mostra na notificação o botão que abre o WhatsApp com uma mensagem pronta.
+  BoolColumn get whatsapp => boolean().withDefault(const Constant(false))();
+
+  /// Para quem vai a mensagem. Vazio: o WhatsApp pede para escolher o contato.
+  TextColumn get whatsappNumero => text().nullable()();
+
+  /// Texto da mensagem. Vazio: vai o título e o horário da tarefa ou do evento.
+  TextColumn get whatsappMensagem => text().nullable()();
 }
 
 /// Foto ou gravação de voz presa a uma tarefa ou evento.
@@ -93,7 +102,7 @@ class AppDatabase extends _$AppDatabase {
       : super(executor ?? driftDatabase(name: 'agenda'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -104,6 +113,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(produtos);
           }
           if (de < 4) await m.createTable(anexos);
+          if (de < 5) {
+            await m.addColumn(lembretes, lembretes.whatsapp);
+            await m.addColumn(lembretes, lembretes.whatsappNumero);
+            await m.addColumn(lembretes, lembretes.whatsappMensagem);
+          }
         },
         beforeOpen: (_) async {
           // Necessário para apagar lembretes e produtos junto com o dono.
