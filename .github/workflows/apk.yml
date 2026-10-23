@@ -44,5 +44,5 @@ jobs:
           tag_name: teste-${{ github.run_number }}
           name: Versão de teste ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          prerelease: true
+          make_latest: true
           files: agenda.apk
