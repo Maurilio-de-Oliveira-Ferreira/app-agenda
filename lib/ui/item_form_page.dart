@@ -46,6 +46,10 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
   bool _lembrar = false;
   late DateTime _quando;
+
+  /// Minutos de antecedência do aviso em relação ao prazo ou início.
+  /// Nulo quando a pessoa escolheu um horário que não bate com as opções.
+  int? _antecedencia = 0;
   Frequencia _frequencia = Frequencia.nenhuma;
   final _intervalo = TextEditingController(text: '1');
   int _soneca = 10;
@@ -109,6 +113,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     setState(() {
       _lembrar = true;
       _quando = l.quando;
+      _antecedencia = _antecedenciaDe(l.quando);
       _frequencia = l.frequencia;
       _intervalo.text = '${l.intervalo}';
       _soneca = l.sonecaMinutos;
@@ -123,6 +128,32 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     if (_evento || _temPrazo) return _inicio;
     return _proximaHoraCheia(null);
   }
+
+  bool get _temReferencia => _evento || _temPrazo;
+
+  int? _antecedenciaDe(DateTime quando) {
+    if (!_temReferencia) return null;
+    final diferenca = _horarioSugerido().difference(quando);
+    final minutos = diferenca.inMinutes;
+    return diferenca == Duration(minutes: minutos) && _antecedencias.contains(minutos) ? minutos : null;
+  }
+
+  /// Recalcula o aviso depois de mudar o prazo ou o início, mantendo a antecedência.
+  void _ajustarLembrete() {
+    if (_temReferencia && _antecedencia != null) {
+      _quando = _horarioSugerido().subtract(Duration(minutes: _antecedencia!));
+    }
+  }
+
+  String _nomeDaAntecedencia(int m) => switch (m) {
+        0 => _evento && _diaInteiro ? 'No dia, às 9h' : 'Na hora',
+        < 60 => '$m minutos antes',
+        60 => '1 hora antes',
+        < 1440 => '${m ~/ 60} horas antes',
+        1440 => '1 dia antes',
+        10080 => '1 semana antes',
+        _ => '${m ~/ 1440} dias antes',
+      };
 
   @override
   void dispose() {
@@ -215,13 +246,19 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
           contentPadding: EdgeInsets.zero,
           title: const Text('Definir prazo'),
           value: _temPrazo,
-          onChanged: (v) => setState(() => _temPrazo = v),
+          onChanged: (v) => setState(() {
+            _temPrazo = v;
+            _ajustarLembrete();
+          }),
         ),
         if (_temPrazo)
           _SeletorDataHora(
             rotulo: 'Prazo',
             valor: _inicio,
-            onChanged: (v) => setState(() => _inicio = v),
+            onChanged: (v) => setState(() {
+              _inicio = v;
+              _ajustarLembrete();
+            }),
           ),
       ];
 
@@ -230,7 +267,10 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
           contentPadding: EdgeInsets.zero,
           title: const Text('Dia inteiro'),
           value: _diaInteiro,
-          onChanged: (v) => setState(() => _diaInteiro = v),
+          onChanged: (v) => setState(() {
+            _diaInteiro = v;
+            _ajustarLembrete();
+          }),
         ),
         _SeletorDataHora(
           rotulo: 'Início',
@@ -241,6 +281,7 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             final duracao = _fim.difference(_inicio);
             _inicio = v;
             _fim = v.add(duracao);
+            _ajustarLembrete();
           }),
         ),
         _SeletorDataHora(
@@ -261,7 +302,10 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
           onChanged: (v) async {
             setState(() {
               _lembrar = v;
-              if (v) _quando = _horarioSugerido();
+              if (v) {
+                _antecedencia = 0;
+                _quando = _horarioSugerido();
+              }
             });
             if (v && !await ref.read(agendadorProvider).pedirPermissao() && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -272,10 +316,29 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
           },
         ),
         if (_lembrar) ...[
+          if (_temReferencia) ...[
+            DropdownButtonFormField<int?>(
+              key: ValueKey(_antecedencia),
+              initialValue: _antecedencia,
+              decoration: const InputDecoration(labelText: 'Quando avisar', border: OutlineInputBorder()),
+              items: [
+                for (final m in _antecedencias) DropdownMenuItem(value: m, child: Text(_nomeDaAntecedencia(m))),
+                const DropdownMenuItem(value: null, child: Text('Outro horário')),
+              ],
+              onChanged: (m) => setState(() {
+                _antecedencia = m;
+                _ajustarLembrete();
+              }),
+            ),
+            const SizedBox(height: 8),
+          ],
           _SeletorDataHora(
             rotulo: 'Avisar',
             valor: _quando,
-            onChanged: (v) => setState(() => _quando = v),
+            onChanged: (v) => setState(() {
+              _quando = v;
+              _antecedencia = _antecedenciaDe(v);
+            }),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<Frequencia>(
@@ -424,6 +487,9 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     if (mounted) Navigator.of(context).pop();
   }
 }
+
+/// Opções de antecedência do aviso, em minutos (1440 = 1 dia, 10080 = 1 semana).
+const _antecedencias = [0, 5, 10, 30, 60, 120, 1440, 10080];
 
 class _SeletorDataHora extends StatelessWidget {
   const _SeletorDataHora({
