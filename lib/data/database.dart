@@ -41,24 +41,52 @@ class Lembretes extends Table {
   IntColumn get sonecaMinutos => integer().withDefault(const Constant(10))();
 }
 
+/// Uma lista de compras, como "Mercado" ou "Farmácia".
+@DataClassName('ListaCompras')
+class Listas extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get nome => text().withLength(min: 1, max: 100)();
+  DateTimeColumn get criadoEm => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Um produto de uma lista de compras. É apagado junto com a lista.
+@DataClassName('Produto')
+class Produtos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get listaId => integer().references(Listas, #id, onDelete: KeyAction.cascade)();
+  TextColumn get nome => text().withLength(min: 1, max: 200)();
+
+  /// Texto livre, como "2 kg" ou "1 caixa".
+  TextColumn get quantidade => text().nullable()();
+  BoolColumn get comprado => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get criadoEm => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Uma lista com quantos produtos tem e quantos já foram comprados.
+typedef ResumoLista = ({ListaCompras lista, int total, int comprados});
+
 /// Um lembrete junto com a tarefa ou o evento a que pertence.
 typedef LembreteComItem = ({Lembrete lembrete, Item item});
 
-@DriftDatabase(tables: [Itens, Lembretes])
+@DriftDatabase(tables: [Itens, Lembretes, Listas, Produtos])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
       : super(executor ?? driftDatabase(name: 'agenda'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onUpgrade: (m, de, para) async {
           if (de < 2) await m.createTable(lembretes);
+          if (de < 3) {
+            await m.createTable(listas);
+            await m.createTable(produtos);
+          }
         },
         beforeOpen: (_) async {
-          // Necessário para apagar os lembretes junto com o item.
+          // Necessário para apagar lembretes e produtos junto com o dono.
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
@@ -139,5 +167,80 @@ class AppDatabase extends _$AppDatabase {
     return consulta.watch().map((linhas) => [
           for (final l in linhas) (lembrete: l.readTable(lembretes), item: l.readTable(itens)),
         ]);
+  }
+
+  /// Listas de compras em ordem alfabética, com a contagem de produtos.
+  Stream<List<ResumoLista>> watchListas() {
+    final total = produtos.id.count();
+    final comprados = produtos.id.count(filter: produtos.comprado.equals(true));
+    final consulta = select(listas).join([
+      leftOuterJoin(produtos, produtos.listaId.equalsExp(listas.id)),
+    ])
+      ..addColumns([total, comprados])
+      ..groupBy([listas.id])
+      ..orderBy([OrderingTerm(expression: listas.nome.collate(Collate.noCase))]);
+    return consulta.watch().map((linhas) => [
+          for (final l in linhas)
+            (lista: l.readTable(listas), total: l.read(total)!, comprados: l.read(comprados)!),
+        ]);
+  }
+
+  Stream<ListaCompras?> watchLista(int id) {
+    return (select(listas)..where((l) => l.id.equals(id))).watchSingleOrNull();
+  }
+
+  Future<int> criarLista(String nome) => into(listas).insert(ListasCompanion.insert(nome: nome));
+
+  Future<void> renomearLista(int id, String nome) {
+    return (update(listas)..where((l) => l.id.equals(id))).write(ListasCompanion(nome: Value(nome)));
+  }
+
+  Future<void> excluirLista(int id) {
+    return (delete(listas)..where((l) => l.id.equals(id))).go();
+  }
+
+  /// Produtos que faltam comprar primeiro, na ordem em que foram adicionados.
+  Stream<List<Produto>> watchProdutos(int listaId) {
+    return (select(produtos)
+          ..where((p) => p.listaId.equals(listaId))
+          ..orderBy([
+            (p) => OrderingTerm(expression: p.comprado),
+            (p) => OrderingTerm(expression: p.criadoEm),
+            (p) => OrderingTerm(expression: p.id),
+          ]))
+        .watch();
+  }
+
+  Future<int> adicionarProduto(int listaId, String nome, {String? quantidade}) {
+    return into(produtos).insert(ProdutosCompanion.insert(
+      listaId: listaId,
+      nome: nome,
+      quantidade: Value(quantidade),
+    ));
+  }
+
+  Future<int> recriarProduto(Produto produto) => into(produtos).insert(produto.toCompanion(true));
+
+  Future<void> atualizarProduto(int id, ProdutosCompanion produto) {
+    return (update(produtos)..where((p) => p.id.equals(id))).write(produto);
+  }
+
+  Future<void> alternarComprado(Produto produto) {
+    return atualizarProduto(produto.id, ProdutosCompanion(comprado: Value(!produto.comprado)));
+  }
+
+  Future<void> excluirProduto(int id) {
+    return (delete(produtos)..where((p) => p.id.equals(id))).go();
+  }
+
+  /// Apaga os produtos já comprados e devolve quantos eram.
+  Future<int> limparComprados(int listaId) {
+    return (delete(produtos)..where((p) => p.listaId.equals(listaId) & p.comprado.equals(true))).go();
+  }
+
+  /// Desmarca todos os produtos, para reaproveitar a lista na próxima compra.
+  Future<void> desmarcarTodos(int listaId) {
+    return (update(produtos)..where((p) => p.listaId.equals(listaId)))
+        .write(const ProdutosCompanion(comprado: Value(false)));
   }
 }
