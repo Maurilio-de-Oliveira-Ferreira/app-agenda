@@ -1,0 +1,38 @@
+# Cria, uma única vez, a chave de assinatura do app. Rode pela aba Actions
+# ("Criar chave de assinatura" > Run workflow), copie o valor do resumo para o
+# segredo ASSINATURA_APK e depois apague a execução. O repositório é privado.
+name: Criar chave de assinatura
+
+on:
+  workflow_dispatch:
+
+jobs:
+  chave:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Gerar chave
+        env:
+          JA_EXISTE: ${{ secrets.ASSINATURA_APK != '' }}
+        run: |
+          if [ "$JA_EXISTE" = "true" ]; then
+            echo "O segredo ASSINATURA_APK já existe. Trocar a chave impediria atualizar o app por cima." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          # A senha é fixa: quem protege a chave é o segredo do GitHub.
+          keytool -genkeypair -keystore agenda.jks -storetype PKCS12 -alias agenda \
+            -keyalg EC -groupname secp256r1 -validity 10000 \
+            -storepass agenda-app -keypass agenda-app -dname "CN=App Agenda, C=BR"
+          {
+            echo "Copie o valor abaixo (botão de copiar no canto do quadro) para o segredo **ASSINATURA_APK**."
+            echo "Depois apague esta execução."
+            echo
+            echo '```'
+            base64 -w0 agenda.jks
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

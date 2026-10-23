@@ -28,7 +28,19 @@ jobs:
 
       - run: flutter pub get
       - run: flutter test --timeout 60s
-      - run: flutter build apk --release
+      - name: Preparar chave de assinatura
+        env:
+          ASSINATURA_APK: ${{ secrets.ASSINATURA_APK }}
+        run: |
+          if [ -z "$ASSINATURA_APK" ]; then
+            echo "::warning::Segredo ASSINATURA_APK não configurado: o APK sai com chave temporária e não instala por cima."
+            exit 0
+          fi
+          echo "$ASSINATURA_APK" | base64 -d > android/agenda.jks
+          printf 'storeFile=agenda.jks\nkeyAlias=agenda\npassword=agenda-app\n' > android/key.properties
+
+      # O número da versão sobe a cada build, para o Android aceitar a atualização.
+      - run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Renomear APK
         run: cp build/app/outputs/flutter-apk/app-release.apk agenda.apk
