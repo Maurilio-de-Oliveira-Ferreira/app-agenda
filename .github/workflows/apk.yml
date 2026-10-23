@@ -1,0 +1,48 @@
+# Gera o APK do app a cada push e publica em "Releases" para instalar no celular.
+name: Gerar APK
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter test --timeout 60s
+      - run: flutter build apk --release
+
+      - name: Renomear APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk agenda.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agenda-apk
+          path: agenda.apk
+
+      - name: Publicar em Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: teste-${{ github.run_number }}
+          name: Versão de teste ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: agenda.apk
