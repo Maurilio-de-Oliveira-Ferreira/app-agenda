@@ -41,6 +41,22 @@ class Lembretes extends Table {
   IntColumn get sonecaMinutos => integer().withDefault(const Constant(10))();
 }
 
+/// Foto ou gravação de voz presa a uma tarefa ou evento.
+enum TipoAnexo { imagem, audio }
+
+/// O arquivo fica na pasta de anexos do app; aqui só se guarda o nome dele.
+/// O registro é apagado junto com o item (o arquivo é limpo quando o app abre).
+class Anexos extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get itemId => integer().references(Itens, #id, onDelete: KeyAction.cascade)();
+  IntColumn get tipo => intEnum<TipoAnexo>()();
+  TextColumn get arquivo => text()();
+
+  /// Duração das gravações, para mostrar sem abrir o arquivo.
+  IntColumn get duracaoMs => integer().nullable()();
+  DateTimeColumn get criadoEm => dateTime().withDefault(currentDateAndTime)();
+}
+
 /// Uma lista de compras, como "Mercado" ou "Farmácia".
 @DataClassName('ListaCompras')
 class Listas extends Table {
@@ -66,15 +82,18 @@ class Produtos extends Table {
 typedef ResumoLista = ({ListaCompras lista, int total, int comprados});
 
 /// Um lembrete junto com a tarefa ou o evento a que pertence.
-typedef LembreteComItem = ({Lembrete lembrete, Item item});
+///
+/// [imagem] é o arquivo da primeira foto do item, que aparece na notificação,
+/// e [temAudio] diz se ele tem um recado de voz.
+typedef LembreteComItem = ({Lembrete lembrete, Item item, String? imagem, bool temAudio});
 
-@DriftDatabase(tables: [Itens, Lembretes, Listas, Produtos])
+@DriftDatabase(tables: [Itens, Lembretes, Listas, Produtos, Anexos])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
       : super(executor ?? driftDatabase(name: 'agenda'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +103,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(listas);
             await m.createTable(produtos);
           }
+          if (de < 4) await m.createTable(anexos);
         },
         beforeOpen: (_) async {
           // Necessário para apagar lembretes e produtos junto com o dono.
@@ -162,11 +182,62 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<LembreteComItem>> watchLembretesAtivos() {
     final consulta = select(lembretes).join([
       innerJoin(itens, itens.id.equalsExp(lembretes.itemId)),
+      leftOuterJoin(anexos, anexos.itemId.equalsExp(itens.id)),
     ])
-      ..where(itens.concluida.equals(false));
-    return consulta.watch().map((linhas) => [
-          for (final l in linhas) (lembrete: l.readTable(lembretes), item: l.readTable(itens)),
-        ]);
+      ..where(itens.concluida.equals(false))
+      ..orderBy([OrderingTerm(expression: lembretes.id), OrderingTerm(expression: anexos.id)]);
+    return consulta.watch().map((linhas) {
+      // Cada anexo vira uma linha; junta de volta um resultado por lembrete.
+      final porLembrete = <int, LembreteComItem>{};
+      for (final linha in linhas) {
+        final lembrete = linha.readTable(lembretes);
+        final anexo = linha.readTableOrNull(anexos);
+        final atual = porLembrete[lembrete.id] ??
+            (lembrete: lembrete, item: linha.readTable(itens), imagem: null, temAudio: false);
+        porLembrete[lembrete.id] = (
+          lembrete: lembrete,
+          item: atual.item,
+          imagem: atual.imagem ?? (anexo?.tipo == TipoAnexo.imagem ? anexo!.arquivo : null),
+          temAudio: atual.temAudio || anexo?.tipo == TipoAnexo.audio,
+        );
+      }
+      return porLembrete.values.toList();
+    });
+  }
+
+  /// Fotos e gravações de um item, na ordem em que foram adicionadas.
+  Future<List<Anexo>> anexosDoItem(int itemId) {
+    return (select(anexos)
+          ..where((a) => a.itemId.equals(itemId))
+          ..orderBy([(a) => OrderingTerm(expression: a.id)]))
+        .get();
+  }
+
+  /// Troca todos os anexos do item pelos de [novos].
+  Future<void> definirAnexos(int itemId, List<AnexosCompanion> novos) {
+    return transaction(() async {
+      await (delete(anexos)..where((a) => a.itemId.equals(itemId))).go();
+      for (final a in novos) {
+        await into(anexos).insert(a.copyWith(id: const Value.absent(), itemId: Value(itemId)));
+      }
+    });
+  }
+
+  /// Anexos por item, para mostrar os ícones de foto e voz nas listas.
+  Stream<Map<int, List<Anexo>>> watchAnexosPorItem() {
+    return (select(anexos)..orderBy([(a) => OrderingTerm(expression: a.id)])).watch().map((lista) {
+      final mapa = <int, List<Anexo>>{};
+      for (final a in lista) {
+        (mapa[a.itemId] ??= []).add(a);
+      }
+      return mapa;
+    });
+  }
+
+  /// Nomes de todos os arquivos ainda usados, para apagar os que sobraram.
+  Future<Set<String>> arquivosEmUso() async {
+    final nomes = await (selectOnly(anexos)..addColumns([anexos.arquivo])).map((l) => l.read(anexos.arquivo)!).get();
+    return nomes.toSet();
   }
 
   /// Listas de compras em ordem alfabética, com a contagem de produtos.

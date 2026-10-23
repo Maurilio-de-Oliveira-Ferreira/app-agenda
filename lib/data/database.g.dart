@@ -1619,6 +1619,408 @@ class ProdutosCompanion extends UpdateCompanion<Produto> {
   }
 }
 
+class $AnexosTable extends Anexos with TableInfo<$AnexosTable, Anexo> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AnexosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES itens (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<TipoAnexo, int> tipo =
+      GeneratedColumn<int>(
+        'tipo',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<TipoAnexo>($AnexosTable.$convertertipo);
+  static const VerificationMeta _arquivoMeta = const VerificationMeta(
+    'arquivo',
+  );
+  @override
+  late final GeneratedColumn<String> arquivo = GeneratedColumn<String>(
+    'arquivo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _duracaoMsMeta = const VerificationMeta(
+    'duracaoMs',
+  );
+  @override
+  late final GeneratedColumn<int> duracaoMs = GeneratedColumn<int>(
+    'duracao_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _criadoEmMeta = const VerificationMeta(
+    'criadoEm',
+  );
+  @override
+  late final GeneratedColumn<DateTime> criadoEm = GeneratedColumn<DateTime>(
+    'criado_em',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    itemId,
+    tipo,
+    arquivo,
+    duracaoMs,
+    criadoEm,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'anexos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Anexo> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('arquivo')) {
+      context.handle(
+        _arquivoMeta,
+        arquivo.isAcceptableOrUnknown(data['arquivo']!, _arquivoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_arquivoMeta);
+    }
+    if (data.containsKey('duracao_ms')) {
+      context.handle(
+        _duracaoMsMeta,
+        duracaoMs.isAcceptableOrUnknown(data['duracao_ms']!, _duracaoMsMeta),
+      );
+    }
+    if (data.containsKey('criado_em')) {
+      context.handle(
+        _criadoEmMeta,
+        criadoEm.isAcceptableOrUnknown(data['criado_em']!, _criadoEmMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Anexo map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Anexo(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_id'],
+      )!,
+      tipo: $AnexosTable.$convertertipo.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}tipo'],
+        )!,
+      ),
+      arquivo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}arquivo'],
+      )!,
+      duracaoMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duracao_ms'],
+      ),
+      criadoEm: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}criado_em'],
+      )!,
+    );
+  }
+
+  @override
+  $AnexosTable createAlias(String alias) {
+    return $AnexosTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<TipoAnexo, int, int> $convertertipo =
+      const EnumIndexConverter<TipoAnexo>(TipoAnexo.values);
+}
+
+class Anexo extends DataClass implements Insertable<Anexo> {
+  final int id;
+  final int itemId;
+  final TipoAnexo tipo;
+  final String arquivo;
+
+  /// Duração das gravações, para mostrar sem abrir o arquivo.
+  final int? duracaoMs;
+  final DateTime criadoEm;
+  const Anexo({
+    required this.id,
+    required this.itemId,
+    required this.tipo,
+    required this.arquivo,
+    this.duracaoMs,
+    required this.criadoEm,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['item_id'] = Variable<int>(itemId);
+    {
+      map['tipo'] = Variable<int>($AnexosTable.$convertertipo.toSql(tipo));
+    }
+    map['arquivo'] = Variable<String>(arquivo);
+    if (!nullToAbsent || duracaoMs != null) {
+      map['duracao_ms'] = Variable<int>(duracaoMs);
+    }
+    map['criado_em'] = Variable<DateTime>(criadoEm);
+    return map;
+  }
+
+  AnexosCompanion toCompanion(bool nullToAbsent) {
+    return AnexosCompanion(
+      id: Value(id),
+      itemId: Value(itemId),
+      tipo: Value(tipo),
+      arquivo: Value(arquivo),
+      duracaoMs: duracaoMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(duracaoMs),
+      criadoEm: Value(criadoEm),
+    );
+  }
+
+  factory Anexo.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Anexo(
+      id: serializer.fromJson<int>(json['id']),
+      itemId: serializer.fromJson<int>(json['itemId']),
+      tipo: $AnexosTable.$convertertipo.fromJson(
+        serializer.fromJson<int>(json['tipo']),
+      ),
+      arquivo: serializer.fromJson<String>(json['arquivo']),
+      duracaoMs: serializer.fromJson<int?>(json['duracaoMs']),
+      criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'itemId': serializer.toJson<int>(itemId),
+      'tipo': serializer.toJson<int>($AnexosTable.$convertertipo.toJson(tipo)),
+      'arquivo': serializer.toJson<String>(arquivo),
+      'duracaoMs': serializer.toJson<int?>(duracaoMs),
+      'criadoEm': serializer.toJson<DateTime>(criadoEm),
+    };
+  }
+
+  Anexo copyWith({
+    int? id,
+    int? itemId,
+    TipoAnexo? tipo,
+    String? arquivo,
+    Value<int?> duracaoMs = const Value.absent(),
+    DateTime? criadoEm,
+  }) => Anexo(
+    id: id ?? this.id,
+    itemId: itemId ?? this.itemId,
+    tipo: tipo ?? this.tipo,
+    arquivo: arquivo ?? this.arquivo,
+    duracaoMs: duracaoMs.present ? duracaoMs.value : this.duracaoMs,
+    criadoEm: criadoEm ?? this.criadoEm,
+  );
+  Anexo copyWithCompanion(AnexosCompanion data) {
+    return Anexo(
+      id: data.id.present ? data.id.value : this.id,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      tipo: data.tipo.present ? data.tipo.value : this.tipo,
+      arquivo: data.arquivo.present ? data.arquivo.value : this.arquivo,
+      duracaoMs: data.duracaoMs.present ? data.duracaoMs.value : this.duracaoMs,
+      criadoEm: data.criadoEm.present ? data.criadoEm.value : this.criadoEm,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Anexo(')
+          ..write('id: $id, ')
+          ..write('itemId: $itemId, ')
+          ..write('tipo: $tipo, ')
+          ..write('arquivo: $arquivo, ')
+          ..write('duracaoMs: $duracaoMs, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, itemId, tipo, arquivo, duracaoMs, criadoEm);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Anexo &&
+          other.id == this.id &&
+          other.itemId == this.itemId &&
+          other.tipo == this.tipo &&
+          other.arquivo == this.arquivo &&
+          other.duracaoMs == this.duracaoMs &&
+          other.criadoEm == this.criadoEm);
+}
+
+class AnexosCompanion extends UpdateCompanion<Anexo> {
+  final Value<int> id;
+  final Value<int> itemId;
+  final Value<TipoAnexo> tipo;
+  final Value<String> arquivo;
+  final Value<int?> duracaoMs;
+  final Value<DateTime> criadoEm;
+  const AnexosCompanion({
+    this.id = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.tipo = const Value.absent(),
+    this.arquivo = const Value.absent(),
+    this.duracaoMs = const Value.absent(),
+    this.criadoEm = const Value.absent(),
+  });
+  AnexosCompanion.insert({
+    this.id = const Value.absent(),
+    required int itemId,
+    required TipoAnexo tipo,
+    required String arquivo,
+    this.duracaoMs = const Value.absent(),
+    this.criadoEm = const Value.absent(),
+  }) : itemId = Value(itemId),
+       tipo = Value(tipo),
+       arquivo = Value(arquivo);
+  static Insertable<Anexo> custom({
+    Expression<int>? id,
+    Expression<int>? itemId,
+    Expression<int>? tipo,
+    Expression<String>? arquivo,
+    Expression<int>? duracaoMs,
+    Expression<DateTime>? criadoEm,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (itemId != null) 'item_id': itemId,
+      if (tipo != null) 'tipo': tipo,
+      if (arquivo != null) 'arquivo': arquivo,
+      if (duracaoMs != null) 'duracao_ms': duracaoMs,
+      if (criadoEm != null) 'criado_em': criadoEm,
+    });
+  }
+
+  AnexosCompanion copyWith({
+    Value<int>? id,
+    Value<int>? itemId,
+    Value<TipoAnexo>? tipo,
+    Value<String>? arquivo,
+    Value<int?>? duracaoMs,
+    Value<DateTime>? criadoEm,
+  }) {
+    return AnexosCompanion(
+      id: id ?? this.id,
+      itemId: itemId ?? this.itemId,
+      tipo: tipo ?? this.tipo,
+      arquivo: arquivo ?? this.arquivo,
+      duracaoMs: duracaoMs ?? this.duracaoMs,
+      criadoEm: criadoEm ?? this.criadoEm,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<int>(itemId.value);
+    }
+    if (tipo.present) {
+      map['tipo'] = Variable<int>(
+        $AnexosTable.$convertertipo.toSql(tipo.value),
+      );
+    }
+    if (arquivo.present) {
+      map['arquivo'] = Variable<String>(arquivo.value);
+    }
+    if (duracaoMs.present) {
+      map['duracao_ms'] = Variable<int>(duracaoMs.value);
+    }
+    if (criadoEm.present) {
+      map['criado_em'] = Variable<DateTime>(criadoEm.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AnexosCompanion(')
+          ..write('id: $id, ')
+          ..write('itemId: $itemId, ')
+          ..write('tipo: $tipo, ')
+          ..write('arquivo: $arquivo, ')
+          ..write('duracaoMs: $duracaoMs, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1626,6 +2028,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LembretesTable lembretes = $LembretesTable(this);
   late final $ListasTable listas = $ListasTable(this);
   late final $ProdutosTable produtos = $ProdutosTable(this);
+  late final $AnexosTable anexos = $AnexosTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1635,6 +2038,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     lembretes,
     listas,
     produtos,
+    anexos,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1651,6 +2055,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('produtos', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'itens',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('anexos', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1695,6 +2106,25 @@ final class $$ItensTableReferences
     ).filter((f) => f.itemId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_lembretesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$AnexosTable, List<Anexo>> _anexosRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.anexos,
+    aliasName: 'itens__id__anexos__item_id',
+  );
+
+  $$AnexosTableProcessedTableManager get anexosRefs {
+    final manager = $$AnexosTableTableManager(
+      $_db,
+      $_db.anexos,
+    ).filter((f) => f.itemId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_anexosRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -1771,6 +2201,31 @@ class $$ItensTableFilterComposer extends Composer<_$AppDatabase, $ItensTable> {
           }) => $$LembretesTableFilterComposer(
             $db: $db,
             $table: $db.lembretes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> anexosRefs(
+    Expression<bool> Function($$AnexosTableFilterComposer f) f,
+  ) {
+    final $$AnexosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.anexos,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AnexosTableFilterComposer(
+            $db: $db,
+            $table: $db.anexos,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1898,6 +2353,31 @@ class $$ItensTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> anexosRefs<T extends Object>(
+    Expression<T> Function($$AnexosTableAnnotationComposer a) f,
+  ) {
+    final $$AnexosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.anexos,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AnexosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.anexos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ItensTableTableManager
@@ -1913,7 +2393,7 @@ class $$ItensTableTableManager
           $$ItensTableUpdateCompanionBuilder,
           (Item, $$ItensTableReferences),
           Item,
-          PrefetchHooks Function({bool lembretesRefs})
+          PrefetchHooks Function({bool lembretesRefs, bool anexosRefs})
         > {
   $$ItensTableTableManager(_$AppDatabase db, $ItensTable table)
     : super(
@@ -1978,10 +2458,13 @@ class $$ItensTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({lembretesRefs = false}) {
+          prefetchHooksCallback: ({lembretesRefs = false, anexosRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (lembretesRefs) db.lembretes],
+              explicitlyWatchedTables: [
+                if (lembretesRefs) db.lembretes,
+                if (anexosRefs) db.anexos,
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
@@ -1992,6 +2475,18 @@ class $$ItensTableTableManager
                           ._lembretesRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$ItensTableReferences(db, table, p0).lembretesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.itemId == item.id),
+                      typedResults: items,
+                    ),
+                  if (anexosRefs)
+                    await $_getPrefetchedData<Item, $ItensTable, Anexo>(
+                      currentTable: table,
+                      referencedTable: $$ItensTableReferences._anexosRefsTable(
+                        db,
+                      ),
+                      managerFromTypedResult: (p0) =>
+                          $$ItensTableReferences(db, table, p0).anexosRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
                           referencedItems.where((e) => e.itemId == item.id),
                       typedResults: items,
@@ -2016,7 +2511,7 @@ typedef $$ItensTableProcessedTableManager =
       $$ItensTableUpdateCompanionBuilder,
       (Item, $$ItensTableReferences),
       Item,
-      PrefetchHooks Function({bool lembretesRefs})
+      PrefetchHooks Function({bool lembretesRefs, bool anexosRefs})
     >;
 typedef $$LembretesTableCreateCompanionBuilder = LembretesCompanion Function({
   Value<int> id,
@@ -2920,6 +3415,334 @@ typedef $$ProdutosTableProcessedTableManager =
       Produto,
       PrefetchHooks Function({bool listaId})
     >;
+typedef $$AnexosTableCreateCompanionBuilder = AnexosCompanion Function({
+  Value<int> id,
+  required int itemId,
+  required TipoAnexo tipo,
+  required String arquivo,
+  Value<int?> duracaoMs,
+  Value<DateTime> criadoEm,
+});
+typedef $$AnexosTableUpdateCompanionBuilder = AnexosCompanion Function({
+  Value<int> id,
+  Value<int> itemId,
+  Value<TipoAnexo> tipo,
+  Value<String> arquivo,
+  Value<int?> duracaoMs,
+  Value<DateTime> criadoEm,
+});
+
+final class $$AnexosTableReferences
+    extends BaseReferences<_$AppDatabase, $AnexosTable, Anexo> {
+  $$AnexosTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ItensTable _itemIdTable(_$AppDatabase db) =>
+      db.itens.createAlias('anexos__item_id__itens__id');
+
+  $$ItensTableProcessedTableManager get itemId {
+    final $_column = $_itemColumn<int>('item_id')!;
+
+    final manager = $$ItensTableTableManager(
+      $_db,
+      $_db.itens,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_itemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AnexosTableFilterComposer
+    extends Composer<_$AppDatabase, $AnexosTable> {
+  $$AnexosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<TipoAnexo, TipoAnexo, int> get tipo =>
+      $composableBuilder(
+        column: $table.tipo,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get arquivo => $composableBuilder(
+    column: $table.arquivo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get duracaoMs => $composableBuilder(
+    column: $table.duracaoMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ItensTableFilterComposer get itemId {
+    final $$ItensTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableFilterComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnexosTableOrderingComposer
+    extends Composer<_$AppDatabase, $AnexosTable> {
+  $$AnexosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tipo => $composableBuilder(
+    column: $table.tipo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get arquivo => $composableBuilder(
+    column: $table.arquivo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get duracaoMs => $composableBuilder(
+    column: $table.duracaoMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ItensTableOrderingComposer get itemId {
+    final $$ItensTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableOrderingComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnexosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AnexosTable> {
+  $$AnexosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TipoAnexo, int> get tipo =>
+      $composableBuilder(column: $table.tipo, builder: (column) => column);
+
+  GeneratedColumn<String> get arquivo =>
+      $composableBuilder(column: $table.arquivo, builder: (column) => column);
+
+  GeneratedColumn<int> get duracaoMs =>
+      $composableBuilder(column: $table.duracaoMs, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get criadoEm =>
+      $composableBuilder(column: $table.criadoEm, builder: (column) => column);
+
+  $$ItensTableAnnotationComposer get itemId {
+    final $$ItensTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableAnnotationComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AnexosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AnexosTable,
+          Anexo,
+          $$AnexosTableFilterComposer,
+          $$AnexosTableOrderingComposer,
+          $$AnexosTableAnnotationComposer,
+          $$AnexosTableCreateCompanionBuilder,
+          $$AnexosTableUpdateCompanionBuilder,
+          (Anexo, $$AnexosTableReferences),
+          Anexo,
+          PrefetchHooks Function({bool itemId})
+        > {
+  $$AnexosTableTableManager(_$AppDatabase db, $AnexosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AnexosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AnexosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AnexosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> itemId = const Value.absent(),
+                Value<TipoAnexo> tipo = const Value.absent(),
+                Value<String> arquivo = const Value.absent(),
+                Value<int?> duracaoMs = const Value.absent(),
+                Value<DateTime> criadoEm = const Value.absent(),
+              }) => AnexosCompanion(
+                id: id,
+                itemId: itemId,
+                tipo: tipo,
+                arquivo: arquivo,
+                duracaoMs: duracaoMs,
+                criadoEm: criadoEm,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int itemId,
+                required TipoAnexo tipo,
+                required String arquivo,
+                Value<int?> duracaoMs = const Value.absent(),
+                Value<DateTime> criadoEm = const Value.absent(),
+              }) => AnexosCompanion.insert(
+                id: id,
+                itemId: itemId,
+                tipo: tipo,
+                arquivo: arquivo,
+                duracaoMs: duracaoMs,
+                criadoEm: criadoEm,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AnexosTable, Anexo>(table),
+                  $$AnexosTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({itemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (itemId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.itemId,
+                        referencedTable: $$AnexosTableReferences._itemIdTable(
+                          db,
+                        ),
+                        referencedColumn: $$AnexosTableReferences
+                            ._itemIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AnexosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AnexosTable,
+      Anexo,
+      $$AnexosTableFilterComposer,
+      $$AnexosTableOrderingComposer,
+      $$AnexosTableAnnotationComposer,
+      $$AnexosTableCreateCompanionBuilder,
+      $$AnexosTableUpdateCompanionBuilder,
+      (Anexo, $$AnexosTableReferences),
+      Anexo,
+      PrefetchHooks Function({bool itemId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2932,4 +3755,6 @@ class $AppDatabaseManager {
       $$ListasTableTableManager(_db, _db.listas);
   $$ProdutosTableTableManager get produtos =>
       $$ProdutosTableTableManager(_db, _db.produtos);
+  $$AnexosTableTableManager get anexos =>
+      $$AnexosTableTableManager(_db, _db.anexos);
 }

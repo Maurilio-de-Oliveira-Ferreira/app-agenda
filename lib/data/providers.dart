@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../anexos/midia.dart';
 import '../notificacoes/agendador.dart';
 import 'database.dart';
 
@@ -51,4 +52,11 @@ final listaProvider = StreamProvider.autoDispose.family<ListaCompras?, int>((ref
 
 final produtosProvider = StreamProvider.autoDispose.family<List<Produto>, int>((ref, listaId) {
   return ref.watch(databaseProvider).watchProdutos(listaId);
+});
+
+/// Substituído em `main` pela câmera, galeria e microfone de verdade.
+final midiaProvider = Provider<Midia>((ref) => MidiaDeTeste());
+
+final anexosPorItemProvider = StreamProvider<Map<int, List<Anexo>>>((ref) {
+  return ref.watch(databaseProvider).watchAnexosPorItem();
 });

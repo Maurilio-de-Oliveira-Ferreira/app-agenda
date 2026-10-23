@@ -7,6 +7,8 @@
     <!-- Tocar no horário exato (Android 12 usa a primeira, 13+ a segunda) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- Gravar os recados de voz -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Agenda"
         android:name="${applicationName}"
