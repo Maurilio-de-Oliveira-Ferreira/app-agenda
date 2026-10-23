@@ -552,15 +552,435 @@ class ItensCompanion extends UpdateCompanion<Item> {
   }
 }
 
+class $LembretesTable extends Lembretes
+    with TableInfo<$LembretesTable, Lembrete> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LembretesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES itens (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _quandoMeta = const VerificationMeta('quando');
+  @override
+  late final GeneratedColumn<DateTime> quando = GeneratedColumn<DateTime>(
+    'quando',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Frequencia, int> frequencia =
+      GeneratedColumn<int>(
+        'frequencia',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<Frequencia>($LembretesTable.$converterfrequencia);
+  static const VerificationMeta _intervaloMeta = const VerificationMeta(
+    'intervalo',
+  );
+  @override
+  late final GeneratedColumn<int> intervalo = GeneratedColumn<int>(
+    'intervalo',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _sonecaMinutosMeta = const VerificationMeta(
+    'sonecaMinutos',
+  );
+  @override
+  late final GeneratedColumn<int> sonecaMinutos = GeneratedColumn<int>(
+    'soneca_minutos',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    itemId,
+    quando,
+    frequencia,
+    intervalo,
+    sonecaMinutos,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lembretes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Lembrete> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('quando')) {
+      context.handle(
+        _quandoMeta,
+        quando.isAcceptableOrUnknown(data['quando']!, _quandoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_quandoMeta);
+    }
+    if (data.containsKey('intervalo')) {
+      context.handle(
+        _intervaloMeta,
+        intervalo.isAcceptableOrUnknown(data['intervalo']!, _intervaloMeta),
+      );
+    }
+    if (data.containsKey('soneca_minutos')) {
+      context.handle(
+        _sonecaMinutosMeta,
+        sonecaMinutos.isAcceptableOrUnknown(
+          data['soneca_minutos']!,
+          _sonecaMinutosMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Lembrete map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Lembrete(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_id'],
+      )!,
+      quando: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}quando'],
+      )!,
+      frequencia: $LembretesTable.$converterfrequencia.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}frequencia'],
+        )!,
+      ),
+      intervalo: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}intervalo'],
+      )!,
+      sonecaMinutos: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}soneca_minutos'],
+      )!,
+    );
+  }
+
+  @override
+  $LembretesTable createAlias(String alias) {
+    return $LembretesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<Frequencia, int, int> $converterfrequencia =
+      const EnumIndexConverter<Frequencia>(Frequencia.values);
+}
+
+class Lembrete extends DataClass implements Insertable<Lembrete> {
+  final int id;
+  final int itemId;
+  final DateTime quando;
+  final Frequencia frequencia;
+  final int intervalo;
+
+  /// Quantos minutos o botão "Adiar" da notificação espera.
+  final int sonecaMinutos;
+  const Lembrete({
+    required this.id,
+    required this.itemId,
+    required this.quando,
+    required this.frequencia,
+    required this.intervalo,
+    required this.sonecaMinutos,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['item_id'] = Variable<int>(itemId);
+    map['quando'] = Variable<DateTime>(quando);
+    {
+      map['frequencia'] = Variable<int>(
+        $LembretesTable.$converterfrequencia.toSql(frequencia),
+      );
+    }
+    map['intervalo'] = Variable<int>(intervalo);
+    map['soneca_minutos'] = Variable<int>(sonecaMinutos);
+    return map;
+  }
+
+  LembretesCompanion toCompanion(bool nullToAbsent) {
+    return LembretesCompanion(
+      id: Value(id),
+      itemId: Value(itemId),
+      quando: Value(quando),
+      frequencia: Value(frequencia),
+      intervalo: Value(intervalo),
+      sonecaMinutos: Value(sonecaMinutos),
+    );
+  }
+
+  factory Lembrete.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Lembrete(
+      id: serializer.fromJson<int>(json['id']),
+      itemId: serializer.fromJson<int>(json['itemId']),
+      quando: serializer.fromJson<DateTime>(json['quando']),
+      frequencia: $LembretesTable.$converterfrequencia.fromJson(
+        serializer.fromJson<int>(json['frequencia']),
+      ),
+      intervalo: serializer.fromJson<int>(json['intervalo']),
+      sonecaMinutos: serializer.fromJson<int>(json['sonecaMinutos']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'itemId': serializer.toJson<int>(itemId),
+      'quando': serializer.toJson<DateTime>(quando),
+      'frequencia': serializer.toJson<int>(
+        $LembretesTable.$converterfrequencia.toJson(frequencia),
+      ),
+      'intervalo': serializer.toJson<int>(intervalo),
+      'sonecaMinutos': serializer.toJson<int>(sonecaMinutos),
+    };
+  }
+
+  Lembrete copyWith({
+    int? id,
+    int? itemId,
+    DateTime? quando,
+    Frequencia? frequencia,
+    int? intervalo,
+    int? sonecaMinutos,
+  }) => Lembrete(
+    id: id ?? this.id,
+    itemId: itemId ?? this.itemId,
+    quando: quando ?? this.quando,
+    frequencia: frequencia ?? this.frequencia,
+    intervalo: intervalo ?? this.intervalo,
+    sonecaMinutos: sonecaMinutos ?? this.sonecaMinutos,
+  );
+  Lembrete copyWithCompanion(LembretesCompanion data) {
+    return Lembrete(
+      id: data.id.present ? data.id.value : this.id,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      quando: data.quando.present ? data.quando.value : this.quando,
+      frequencia: data.frequencia.present
+          ? data.frequencia.value
+          : this.frequencia,
+      intervalo: data.intervalo.present ? data.intervalo.value : this.intervalo,
+      sonecaMinutos: data.sonecaMinutos.present
+          ? data.sonecaMinutos.value
+          : this.sonecaMinutos,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Lembrete(')
+          ..write('id: $id, ')
+          ..write('itemId: $itemId, ')
+          ..write('quando: $quando, ')
+          ..write('frequencia: $frequencia, ')
+          ..write('intervalo: $intervalo, ')
+          ..write('sonecaMinutos: $sonecaMinutos')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, itemId, quando, frequencia, intervalo, sonecaMinutos);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Lembrete &&
+          other.id == this.id &&
+          other.itemId == this.itemId &&
+          other.quando == this.quando &&
+          other.frequencia == this.frequencia &&
+          other.intervalo == this.intervalo &&
+          other.sonecaMinutos == this.sonecaMinutos);
+}
+
+class LembretesCompanion extends UpdateCompanion<Lembrete> {
+  final Value<int> id;
+  final Value<int> itemId;
+  final Value<DateTime> quando;
+  final Value<Frequencia> frequencia;
+  final Value<int> intervalo;
+  final Value<int> sonecaMinutos;
+  const LembretesCompanion({
+    this.id = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.quando = const Value.absent(),
+    this.frequencia = const Value.absent(),
+    this.intervalo = const Value.absent(),
+    this.sonecaMinutos = const Value.absent(),
+  });
+  LembretesCompanion.insert({
+    this.id = const Value.absent(),
+    required int itemId,
+    required DateTime quando,
+    this.frequencia = const Value.absent(),
+    this.intervalo = const Value.absent(),
+    this.sonecaMinutos = const Value.absent(),
+  }) : itemId = Value(itemId),
+       quando = Value(quando);
+  static Insertable<Lembrete> custom({
+    Expression<int>? id,
+    Expression<int>? itemId,
+    Expression<DateTime>? quando,
+    Expression<int>? frequencia,
+    Expression<int>? intervalo,
+    Expression<int>? sonecaMinutos,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (itemId != null) 'item_id': itemId,
+      if (quando != null) 'quando': quando,
+      if (frequencia != null) 'frequencia': frequencia,
+      if (intervalo != null) 'intervalo': intervalo,
+      if (sonecaMinutos != null) 'soneca_minutos': sonecaMinutos,
+    });
+  }
+
+  LembretesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? itemId,
+    Value<DateTime>? quando,
+    Value<Frequencia>? frequencia,
+    Value<int>? intervalo,
+    Value<int>? sonecaMinutos,
+  }) {
+    return LembretesCompanion(
+      id: id ?? this.id,
+      itemId: itemId ?? this.itemId,
+      quando: quando ?? this.quando,
+      frequencia: frequencia ?? this.frequencia,
+      intervalo: intervalo ?? this.intervalo,
+      sonecaMinutos: sonecaMinutos ?? this.sonecaMinutos,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<int>(itemId.value);
+    }
+    if (quando.present) {
+      map['quando'] = Variable<DateTime>(quando.value);
+    }
+    if (frequencia.present) {
+      map['frequencia'] = Variable<int>(
+        $LembretesTable.$converterfrequencia.toSql(frequencia.value),
+      );
+    }
+    if (intervalo.present) {
+      map['intervalo'] = Variable<int>(intervalo.value);
+    }
+    if (sonecaMinutos.present) {
+      map['soneca_minutos'] = Variable<int>(sonecaMinutos.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LembretesCompanion(')
+          ..write('id: $id, ')
+          ..write('itemId: $itemId, ')
+          ..write('quando: $quando, ')
+          ..write('frequencia: $frequencia, ')
+          ..write('intervalo: $intervalo, ')
+          ..write('sonecaMinutos: $sonecaMinutos')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ItensTable itens = $ItensTable(this);
+  late final $LembretesTable lembretes = $LembretesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [itens];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [itens, lembretes];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'itens',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('lembretes', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$ItensTableCreateCompanionBuilder = ItensCompanion Function({
@@ -585,6 +1005,29 @@ typedef $$ItensTableUpdateCompanionBuilder = ItensCompanion Function({
   Value<bool> concluida,
   Value<DateTime> criadoEm,
 });
+
+final class $$ItensTableReferences
+    extends BaseReferences<_$AppDatabase, $ItensTable, Item> {
+  $$ItensTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$LembretesTable, List<Lembrete>>
+  _lembretesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.lembretes,
+    aliasName: 'itens__id__lembretes__item_id',
+  );
+
+  $$LembretesTableProcessedTableManager get lembretesRefs {
+    final manager = $$LembretesTableTableManager(
+      $_db,
+      $_db.lembretes,
+    ).filter((f) => f.itemId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_lembretesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$ItensTableFilterComposer extends Composer<_$AppDatabase, $ItensTable> {
   $$ItensTableFilterComposer({
@@ -639,6 +1082,31 @@ class $$ItensTableFilterComposer extends Composer<_$AppDatabase, $ItensTable> {
     column: $table.criadoEm,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> lembretesRefs(
+    Expression<bool> Function($$LembretesTableFilterComposer f) f,
+  ) {
+    final $$LembretesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lembretes,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LembretesTableFilterComposer(
+            $db: $db,
+            $table: $db.lembretes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ItensTableOrderingComposer
@@ -733,6 +1201,31 @@ class $$ItensTableAnnotationComposer
 
   GeneratedColumn<DateTime> get criadoEm =>
       $composableBuilder(column: $table.criadoEm, builder: (column) => column);
+
+  Expression<T> lembretesRefs<T extends Object>(
+    Expression<T> Function($$LembretesTableAnnotationComposer a) f,
+  ) {
+    final $$LembretesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lembretes,
+      getReferencedColumn: (t) => t.itemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LembretesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.lembretes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ItensTableTableManager
@@ -746,9 +1239,9 @@ class $$ItensTableTableManager
           $$ItensTableAnnotationComposer,
           $$ItensTableCreateCompanionBuilder,
           $$ItensTableUpdateCompanionBuilder,
-          (Item, BaseReferences<_$AppDatabase, $ItensTable, Item>),
+          (Item, $$ItensTableReferences),
           Item,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool lembretesRefs})
         > {
   $$ItensTableTableManager(_$AppDatabase db, $ItensTable table)
     : super(
@@ -809,15 +1302,32 @@ class $$ItensTableTableManager
               .map(
                 (e) => (
                   e.readTable<$ItensTable, Item>(table),
-                  BaseReferences<_$AppDatabase, $ItensTable, Item>(
-                    db,
-                    table,
-                    e,
-                  ),
+                  $$ItensTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({lembretesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (lembretesRefs) db.lembretes],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (lembretesRefs)
+                    await $_getPrefetchedData<Item, $ItensTable, Lembrete>(
+                      currentTable: table,
+                      referencedTable: $$ItensTableReferences
+                          ._lembretesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ItensTableReferences(db, table, p0).lembretesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.itemId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -832,9 +1342,341 @@ typedef $$ItensTableProcessedTableManager =
       $$ItensTableAnnotationComposer,
       $$ItensTableCreateCompanionBuilder,
       $$ItensTableUpdateCompanionBuilder,
-      (Item, BaseReferences<_$AppDatabase, $ItensTable, Item>),
+      (Item, $$ItensTableReferences),
       Item,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool lembretesRefs})
+    >;
+typedef $$LembretesTableCreateCompanionBuilder = LembretesCompanion Function({
+  Value<int> id,
+  required int itemId,
+  required DateTime quando,
+  Value<Frequencia> frequencia,
+  Value<int> intervalo,
+  Value<int> sonecaMinutos,
+});
+typedef $$LembretesTableUpdateCompanionBuilder = LembretesCompanion Function({
+  Value<int> id,
+  Value<int> itemId,
+  Value<DateTime> quando,
+  Value<Frequencia> frequencia,
+  Value<int> intervalo,
+  Value<int> sonecaMinutos,
+});
+
+final class $$LembretesTableReferences
+    extends BaseReferences<_$AppDatabase, $LembretesTable, Lembrete> {
+  $$LembretesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ItensTable _itemIdTable(_$AppDatabase db) =>
+      db.itens.createAlias('lembretes__item_id__itens__id');
+
+  $$ItensTableProcessedTableManager get itemId {
+    final $_column = $_itemColumn<int>('item_id')!;
+
+    final manager = $$ItensTableTableManager(
+      $_db,
+      $_db.itens,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_itemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LembretesTableFilterComposer
+    extends Composer<_$AppDatabase, $LembretesTable> {
+  $$LembretesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get quando => $composableBuilder(
+    column: $table.quando,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Frequencia, Frequencia, int> get frequencia =>
+      $composableBuilder(
+        column: $table.frequencia,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get intervalo => $composableBuilder(
+    column: $table.intervalo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sonecaMinutos => $composableBuilder(
+    column: $table.sonecaMinutos,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ItensTableFilterComposer get itemId {
+    final $$ItensTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableFilterComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LembretesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LembretesTable> {
+  $$LembretesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get quando => $composableBuilder(
+    column: $table.quando,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get frequencia => $composableBuilder(
+    column: $table.frequencia,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get intervalo => $composableBuilder(
+    column: $table.intervalo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sonecaMinutos => $composableBuilder(
+    column: $table.sonecaMinutos,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ItensTableOrderingComposer get itemId {
+    final $$ItensTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableOrderingComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LembretesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LembretesTable> {
+  $$LembretesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get quando =>
+      $composableBuilder(column: $table.quando, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Frequencia, int> get frequencia =>
+      $composableBuilder(
+        column: $table.frequencia,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get intervalo =>
+      $composableBuilder(column: $table.intervalo, builder: (column) => column);
+
+  GeneratedColumn<int> get sonecaMinutos => $composableBuilder(
+    column: $table.sonecaMinutos,
+    builder: (column) => column,
+  );
+
+  $$ItensTableAnnotationComposer get itemId {
+    final $$ItensTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.itemId,
+      referencedTable: $db.itens,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ItensTableAnnotationComposer(
+            $db: $db,
+            $table: $db.itens,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LembretesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LembretesTable,
+          Lembrete,
+          $$LembretesTableFilterComposer,
+          $$LembretesTableOrderingComposer,
+          $$LembretesTableAnnotationComposer,
+          $$LembretesTableCreateCompanionBuilder,
+          $$LembretesTableUpdateCompanionBuilder,
+          (Lembrete, $$LembretesTableReferences),
+          Lembrete,
+          PrefetchHooks Function({bool itemId})
+        > {
+  $$LembretesTableTableManager(_$AppDatabase db, $LembretesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LembretesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LembretesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LembretesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> itemId = const Value.absent(),
+                Value<DateTime> quando = const Value.absent(),
+                Value<Frequencia> frequencia = const Value.absent(),
+                Value<int> intervalo = const Value.absent(),
+                Value<int> sonecaMinutos = const Value.absent(),
+              }) => LembretesCompanion(
+                id: id,
+                itemId: itemId,
+                quando: quando,
+                frequencia: frequencia,
+                intervalo: intervalo,
+                sonecaMinutos: sonecaMinutos,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int itemId,
+                required DateTime quando,
+                Value<Frequencia> frequencia = const Value.absent(),
+                Value<int> intervalo = const Value.absent(),
+                Value<int> sonecaMinutos = const Value.absent(),
+              }) => LembretesCompanion.insert(
+                id: id,
+                itemId: itemId,
+                quando: quando,
+                frequencia: frequencia,
+                intervalo: intervalo,
+                sonecaMinutos: sonecaMinutos,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LembretesTable, Lembrete>(table),
+                  $$LembretesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({itemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (itemId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.itemId,
+                        referencedTable: $$LembretesTableReferences
+                            ._itemIdTable(db),
+                        referencedColumn: $$LembretesTableReferences
+                            ._itemIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LembretesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LembretesTable,
+      Lembrete,
+      $$LembretesTableFilterComposer,
+      $$LembretesTableOrderingComposer,
+      $$LembretesTableAnnotationComposer,
+      $$LembretesTableCreateCompanionBuilder,
+      $$LembretesTableUpdateCompanionBuilder,
+      (Lembrete, $$LembretesTableReferences),
+      Lembrete,
+      PrefetchHooks Function({bool itemId})
     >;
 
 class $AppDatabaseManager {
@@ -842,4 +1684,6 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ItensTableTableManager get itens =>
       $$ItensTableTableManager(_db, _db.itens);
+  $$LembretesTableTableManager get lembretes =>
+      $$LembretesTableTableManager(_db, _db.lembretes);
 }

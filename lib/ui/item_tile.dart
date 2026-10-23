@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database.dart';
 import '../data/providers.dart';
+import '../notificacoes/repeticao.dart';
 import '../util/datas.dart';
 import 'item_form_page.dart';
 
@@ -18,6 +19,7 @@ class ItemTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.read(databaseProvider);
+    final lembrete = ref.watch(lembretesPorItemProvider).value?[item.id];
     final tarefa = item.tipo == TipoItem.tarefa;
     final riscado = tarefa && item.concluida;
 
@@ -31,6 +33,7 @@ class ItemTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline),
       ),
       onDismissed: (_) {
+        // O lembrete é apagado junto com o item; o "Desfazer" recria os dois.
         db.excluir(item.id);
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -38,7 +41,12 @@ class ItemTile extends ConsumerWidget {
             content: Text('"${item.titulo}" excluído'),
             action: SnackBarAction(
               label: 'Desfazer',
-              onPressed: () => db.criar(item.toCompanion(true)),
+              onPressed: () async {
+                await db.criar(item.toCompanion(true));
+                if (lembrete != null) {
+                  await db.definirLembrete(item.id, lembrete.toCompanion(true));
+                }
+              },
             ),
           ));
       },
@@ -59,6 +67,16 @@ class ItemTile extends ConsumerWidget {
               : null,
         ),
         subtitle: _subtitulo(),
+        trailing: lembrete == null || riscado
+            ? null
+            : Tooltip(
+                message: 'Lembrete: ${formatarPrazo(lembrete.quando)}, '
+                    '${descreverRepeticao(lembrete.frequencia, lembrete.intervalo).toLowerCase()}',
+                child: Icon(
+                  lembrete.frequencia == Frequencia.nenhuma ? Icons.notifications_active_outlined : Icons.repeat,
+                  size: 20,
+                ),
+              ),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => ItemFormPage(tipo: item.tipo, item: item),
         )),

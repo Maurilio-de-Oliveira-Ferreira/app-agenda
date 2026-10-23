@@ -58,4 +58,39 @@ void main() {
     final titulos = (await db.watchItensEntre(dia, fimDia).first).map((i) => i.titulo);
     expect(titulos, ['Viagem', 'Pagar conta', 'Reunião']);
   });
+  test('lembrete some quando a tarefa é concluída ou excluída', () async {
+    final id = await db.criar(tarefa('Tomar remédio'));
+    await db.definirLembrete(
+      id,
+      LembretesCompanion.insert(
+        itemId: id,
+        quando: DateTime(2026, 11, 1, 8),
+        frequencia: const Value(Frequencia.horas),
+        intervalo: const Value(8),
+      ),
+    );
+
+    var ativos = await db.watchLembretesAtivos().first;
+    expect(ativos.single.item.titulo, 'Tomar remédio');
+    expect(ativos.single.lembrete.intervalo, 8);
+
+    await db.alternarConcluida((await db.itemPorId(id))!);
+    expect(await db.watchLembretesAtivos().first, isEmpty);
+
+    await db.excluir(id);
+    expect(await db.lembreteDoItem(id), isNull);
+  });
+
+  test('definir o lembrete de novo substitui o anterior', () async {
+    final id = await db.criar(tarefa('Ligar para o banco'));
+    await db.definirLembrete(id, LembretesCompanion.insert(itemId: id, quando: DateTime(2026, 11, 1, 8)));
+    await db.definirLembrete(id, LembretesCompanion.insert(itemId: id, quando: DateTime(2026, 11, 2, 9)));
+
+    final porItem = await db.watchLembretesPorItem().first;
+    expect(porItem[id]!.quando, DateTime(2026, 11, 2, 9));
+    expect(porItem.length, 1);
+
+    await db.definirLembrete(id, null);
+    expect(await db.lembreteDoItem(id), isNull);
+  });
 }

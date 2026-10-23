@@ -4,13 +4,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+import 'data/providers.dart';
+import 'notificacoes/agendador.dart';
 import 'ui/home_page.dart';
+import 'ui/navegacao.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR');
   Intl.defaultLocale = 'pt_BR';
-  runApp(const ProviderScope(child: AgendaApp()));
+
+  final container = ProviderContainer(overrides: [
+    agendadorProvider.overrideWithValue(AgendadorLocal()),
+  ]);
+  await container.read(agendadorProvider).iniciar(
+        aoAbrirItem: (id) => abrirItem(container.read(databaseProvider), id),
+      );
+
+  runApp(UncontrolledProviderScope(container: container, child: const AgendaApp()));
 }
 
 class AgendaApp extends StatelessWidget {
@@ -20,6 +31,7 @@ class AgendaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Agenda',
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],
