@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../anexos/editor_de_anexos.dart';
+import '../anexos/midia.dart';
 import '../data/database.dart';
 import '../data/providers.dart';
 import '../notificacoes/repeticao.dart';
@@ -14,6 +16,7 @@ class ItemFormPage extends ConsumerStatefulWidget {
     required this.tipo,
     this.item,
     this.diaInicial,
+    this.tocarAudio = false,
   });
 
   final TipoItem tipo;
@@ -23,6 +26,9 @@ class ItemFormPage extends ConsumerStatefulWidget {
 
   /// Dia sugerido para um evento novo (o dia selecionado no calendário).
   final DateTime? diaInicial;
+
+  /// Toca o recado de voz assim que a tela abre (ao tocar na notificação).
+  final bool tocarAudio;
 
   @override
   ConsumerState<ItemFormPage> createState() => _ItemFormPageState();
@@ -44,6 +50,14 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
   final _intervalo = TextEditingController(text: '1');
   int _soneca = 10;
 
+  /// Anexos como estão na tela, como estavam no banco e os arquivos criados
+  /// nesta edição (apagados se a pessoa sair sem salvar).
+  final _anexos = <Rascunho>[];
+  final _anexosOriginais = <Rascunho>[];
+  final _arquivosNovos = <String>{};
+  bool _salvo = false;
+  late final Midia _midia = ref.read(midiaProvider);
+
   bool get _evento => widget.tipo == TipoItem.evento;
   bool get _editando => widget.item != null;
 
@@ -64,7 +78,29 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     }
 
     _quando = _horarioSugerido();
-    if (item != null) _carregarLembrete(item.id);
+    if (item != null) {
+      _carregarLembrete(item.id);
+      _carregarAnexos(item.id);
+    }
+  }
+
+  Future<void> _carregarAnexos(int itemId) async {
+    final lista = await ref.read(databaseProvider).anexosDoItem(itemId);
+    if (!mounted) return;
+    final rascunhos = [
+      for (final a in lista)
+        (
+          tipo: a.tipo,
+          arquivo: a.arquivo,
+          duracao: a.duracaoMs == null ? null : Duration(milliseconds: a.duracaoMs!),
+        ),
+    ];
+    setState(() {
+      _anexos.addAll(rascunhos);
+      _anexosOriginais.addAll(rascunhos);
+    });
+    final voz = rascunhos.where((a) => a.tipo == TipoAnexo.audio).firstOrNull;
+    if (widget.tocarAudio && voz != null) await _midia.tocar(voz.arquivo);
   }
 
   Future<void> _carregarLembrete(int itemId) async {
@@ -90,6 +126,12 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
 
   @override
   void dispose() {
+    _midia.pararDeTocar();
+    if (!_salvo) {
+      for (final arquivo in _arquivosNovos) {
+        _midia.apagar(arquivo);
+      }
+    }
     _titulo.dispose();
     _descricao.dispose();
     _intervalo.dispose();
@@ -141,6 +183,20 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             if (_evento) ..._camposEvento() else ..._camposTarefa(),
             const Divider(height: 32),
             ..._camposLembrete(),
+            const Divider(height: 32),
+            EditorDeAnexos(
+              midia: _midia,
+              anexos: _anexos,
+              onAdicionar: (a) => setState(() {
+                _anexos.add(a);
+                _arquivosNovos.add(a.arquivo);
+              }),
+              onRemover: (a) {
+                setState(() => _anexos.remove(a));
+                // Um arquivo que já estava salvo só é apagado ao salvar.
+                if (_arquivosNovos.remove(a.arquivo)) _midia.apagar(a.arquivo);
+              },
+            ),
             const SizedBox(height: 72),
           ],
         ),
@@ -335,6 +391,19 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             )
           : null,
     );
+    await db.definirAnexos(id, [
+      for (final a in _anexos)
+        AnexosCompanion.insert(
+          itemId: id,
+          tipo: a.tipo,
+          arquivo: a.arquivo,
+          duracaoMs: Value(a.duracao?.inMilliseconds),
+        ),
+    ]);
+    _salvo = true;
+    for (final a in _anexosOriginais) {
+      if (!_anexos.contains(a)) await _midia.apagar(a.arquivo);
+    }
     if (mounted) Navigator.of(context).pop();
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
+import 'anexos/midia.dart';
 import 'data/providers.dart';
 import 'notificacoes/agendador.dart';
 import 'ui/home_page.dart';
@@ -14,12 +15,18 @@ Future<void> main() async {
   await initializeDateFormatting('pt_BR');
   Intl.defaultLocale = 'pt_BR';
 
+  final pasta = await pastaDosAnexos();
   final container = ProviderContainer(overrides: [
-    agendadorProvider.overrideWithValue(AgendadorLocal()),
+    agendadorProvider.overrideWithValue(AgendadorLocal(pastaAnexos: pasta)),
+    midiaProvider.overrideWithValue(MidiaLocal(pasta)),
   ]);
   await container.read(agendadorProvider).iniciar(
         aoAbrirItem: (id) => abrirItem(container.read(databaseProvider), id),
       );
+
+  // Fotos e gravações de itens que já foram excluídos.
+  final emUso = await container.read(databaseProvider).arquivosEmUso();
+  container.read(midiaProvider).apagarSobras(emUso).ignore();
 
   runApp(UncontrolledProviderScope(container: container, child: const AgendaApp()));
 }

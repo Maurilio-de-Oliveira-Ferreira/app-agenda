@@ -20,6 +20,9 @@ class ItemTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.read(databaseProvider);
     final lembrete = ref.watch(lembretesPorItemProvider).value?[item.id];
+    final anexos = ref.watch(anexosPorItemProvider).value?[item.id] ?? const <Anexo>[];
+    final temFoto = anexos.any((a) => a.tipo == TipoAnexo.imagem);
+    final temVoz = anexos.any((a) => a.tipo == TipoAnexo.audio);
     final tarefa = item.tipo == TipoItem.tarefa;
     final riscado = tarefa && item.concluida;
 
@@ -33,7 +36,8 @@ class ItemTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline),
       ),
       onDismissed: (_) {
-        // O lembrete é apagado junto com o item; o "Desfazer" recria os dois.
+        // Lembrete e anexos são apagados junto com o item; o "Desfazer"
+        // recria tudo (os arquivos só são limpos quando o app abre de novo).
         db.excluir(item.id);
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -45,6 +49,9 @@ class ItemTile extends ConsumerWidget {
                 await db.criar(item.toCompanion(true));
                 if (lembrete != null) {
                   await db.definirLembrete(item.id, lembrete.toCompanion(true));
+                }
+                if (anexos.isNotEmpty) {
+                  await db.definirAnexos(item.id, [for (final a in anexos) a.toCompanion(true)]);
                 }
               },
             ),
@@ -67,9 +74,25 @@ class ItemTile extends ConsumerWidget {
               : null,
         ),
         subtitle: _subtitulo(),
-        trailing: lembrete == null || riscado
-            ? null
-            : Tooltip(
+        trailing: _icones(lembrete: riscado ? null : lembrete, temFoto: temFoto, temVoz: temVoz),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => ItemFormPage(tipo: item.tipo, item: item),
+        )),
+      ),
+    );
+  }
+
+  /// Sininho do lembrete e ícones de foto e voz, quando houver.
+  Widget? _icones({Lembrete? lembrete, required bool temFoto, required bool temVoz}) {
+    if (lembrete == null && !temFoto && !temVoz) return null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4,
+      children: [
+        if (temFoto) const Tooltip(message: 'Tem foto', child: Icon(Icons.image_outlined, size: 20)),
+        if (temVoz) const Tooltip(message: 'Tem recado de voz', child: Icon(Icons.mic_none, size: 20)),
+        if (lembrete != null)
+          Tooltip(
                 message: 'Lembrete: ${formatarPrazo(lembrete.quando)}, '
                     '${descreverRepeticao(lembrete.frequencia, lembrete.intervalo).toLowerCase()}',
                 child: Icon(
@@ -77,10 +100,7 @@ class ItemTile extends ConsumerWidget {
                   size: 20,
                 ),
               ),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => ItemFormPage(tipo: item.tipo, item: item),
-        )),
-      ),
+      ],
     );
   }
 

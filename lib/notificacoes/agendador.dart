@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui' show DartPluginRegistrant;
 
 import 'package:flutter/foundation.dart';
@@ -43,6 +44,11 @@ const _maximoAgendado = 400;
 int _idNotificacao(int lembreteId, int indice) => lembreteId * _idsPorLembrete + indice;
 
 class AgendadorLocal implements Agendador {
+  AgendadorLocal({required this.pastaAnexos});
+
+  /// Onde estão as fotos que aparecem nas notificações.
+  final String pastaAnexos;
+
   final _plugin = FlutterLocalNotificationsPlugin();
 
   AndroidFlutterLocalNotificationsPlugin? get _android =>
@@ -112,7 +118,7 @@ class AgendadorLocal implements Agendador {
 
     final modo = await _modoDeAgendamento(_android);
     for (final a in agendar) {
-      await _agendar(_plugin, a.id, a.quando, _Dados.de(a.l), modo);
+      await _agendar(_plugin, a.id, a.quando, _Dados.de(a.l, pastaAnexos), modo);
     }
   }
 }
@@ -151,6 +157,9 @@ Future<void> _agendar(
   _Dados dados,
   AndroidScheduleMode modo,
 ) {
+  // Se a foto tiver sumido, a notificação sai só com o texto.
+  final imagem = dados.imagem;
+  final foto = imagem != null && File(imagem).existsSync() ? FilePathAndroidBitmap(imagem) : null;
   return plugin.zonedSchedule(
     id: id,
     title: dados.titulo,
@@ -167,6 +176,10 @@ Future<void> _agendar(
         priority: Priority.high,
         category: AndroidNotificationCategory.reminder,
         when: quando.millisecondsSinceEpoch,
+        largeIcon: foto,
+        styleInformation: foto == null
+            ? null
+            : BigPictureStyleInformation(foto, summaryText: dados.texto, hideExpandedLargeIcon: true),
         actions: [
           AndroidNotificationAction(_acaoAdiar, 'Adiar ${dados.sonecaMinutos} min'),
           if (dados.tarefa) const AndroidNotificationAction(_acaoConcluir, 'Concluir'),
@@ -223,13 +236,16 @@ class _Dados {
     required this.texto,
     required this.tarefa,
     required this.sonecaMinutos,
+    this.imagem,
   });
 
-  factory _Dados.de(LembreteComItem l) {
+  factory _Dados.de(LembreteComItem l, String pastaAnexos) {
     final item = l.item;
     final descricao = item.descricao;
     final String texto;
-    if (descricao != null && descricao.isNotEmpty) {
+    if (l.temAudio) {
+      texto = 'Toque para ouvir o recado de voz';
+    } else if (descricao != null && descricao.isNotEmpty) {
       texto = descricao;
     } else if (item.tipo == TipoItem.evento && item.inicio != null) {
       texto = item.diaInteiro
@@ -245,6 +261,7 @@ class _Dados {
       texto: texto,
       tarefa: item.tipo == TipoItem.tarefa,
       sonecaMinutos: l.lembrete.sonecaMinutos,
+      imagem: l.imagem == null ? null : '$pastaAnexos/${l.imagem}',
     );
   }
 
@@ -259,6 +276,7 @@ class _Dados {
         texto: m['texto'] as String,
         tarefa: m['tarefa'] as bool,
         sonecaMinutos: m['soneca'] as int,
+        imagem: m['imagem'] as String?,
       );
     } catch (_) {
       return null;
@@ -272,6 +290,9 @@ class _Dados {
   final bool tarefa;
   final int sonecaMinutos;
 
+  /// Caminho completo da foto mostrada na notificação.
+  final String? imagem;
+
   String json() => jsonEncode({
     'item': itemId,
     'lembrete': lembreteId,
@@ -279,6 +300,7 @@ class _Dados {
     'texto': texto,
     'tarefa': tarefa,
     'soneca': sonecaMinutos,
+    'imagem': imagem,
   });
 }
 
