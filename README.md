@@ -8,6 +8,7 @@ App de agenda e lembretes em português, feito em Flutter (Android primeiro).
 - **Eventos:** início e fim, ou dia inteiro, inclusive eventos de vários dias.
 - **Calendário:** visão de mês, 2 semanas ou semana, com marcadores nos dias que têm eventos ou tarefas com prazo.
 - **Lembretes:** cada tarefa ou evento pode ter um lembrete que mostra uma notificação no horário escolhido. Ele pode se repetir a cada N minutos, horas, dias, semanas ou meses. A notificação tem os botões **Adiar** (soneca de 5 min a 1 hora) e, nas tarefas, **Concluir**. Tocar na notificação abre o item.
+- **Listas de compras:** várias listas (Mercado, Farmácia...), cada uma com seus produtos. Tocar num produto marca como comprado (ele desce para "No carrinho"), o lápis edita nome e quantidade, e deslizar remove (com "Desfazer"). No menu da lista dá para renomear, desmarcar tudo para a próxima compra, remover os comprados ou excluir a lista.
 
 ### Como os lembretes funcionam
 
@@ -40,9 +41,10 @@ dart run build_runner build
 ```
 lib/
   main.dart               app, tema e idioma pt-BR
-  data/database.dart      tabelas de itens (tarefas e eventos) e lembretes
+  data/database.dart      tabelas de itens (tarefas e eventos), lembretes e listas de compras
   data/providers.dart     providers do Riverpod
   notificacoes/           cálculo da repetição e agendamento das notificações
   ui/                     telas: tarefas, calendário e formulário
+  ui/compras/             telas das listas de compras
   util/datas.dart         formatação de datas em português
 ```

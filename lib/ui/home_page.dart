@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/providers.dart';
 import 'calendario_page.dart';
+import 'compras/listas_page.dart';
 import 'navegacao.dart';
 import 'tarefas_page.dart';
 
@@ -53,7 +54,7 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
     return Scaffold(
       body: IndexedStack(
         index: _aba,
-        children: const [TarefasPage(), CalendarioPage()],
+        children: const [TarefasPage(), CalendarioPage(), ListasPage()],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _aba,
@@ -68,6 +69,11 @@ class _HomePageState extends ConsumerState<HomePage> with WidgetsBindingObserver
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month),
             label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart),
+            label: 'Compras',
           ),
         ],
       ),

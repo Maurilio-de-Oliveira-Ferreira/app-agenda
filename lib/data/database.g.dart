@@ -961,16 +961,681 @@ class LembretesCompanion extends UpdateCompanion<Lembrete> {
   }
 }
 
+class $ListasTable extends Listas with TableInfo<$ListasTable, ListaCompras> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ListasTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
+  @override
+  late final GeneratedColumn<String> nome = GeneratedColumn<String>(
+    'nome',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _criadoEmMeta = const VerificationMeta(
+    'criadoEm',
+  );
+  @override
+  late final GeneratedColumn<DateTime> criadoEm = GeneratedColumn<DateTime>(
+    'criado_em',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nome, criadoEm];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'listas';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ListaCompras> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nome')) {
+      context.handle(
+        _nomeMeta,
+        nome.isAcceptableOrUnknown(data['nome']!, _nomeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nomeMeta);
+    }
+    if (data.containsKey('criado_em')) {
+      context.handle(
+        _criadoEmMeta,
+        criadoEm.isAcceptableOrUnknown(data['criado_em']!, _criadoEmMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ListaCompras map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ListaCompras(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      nome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nome'],
+      )!,
+      criadoEm: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}criado_em'],
+      )!,
+    );
+  }
+
+  @override
+  $ListasTable createAlias(String alias) {
+    return $ListasTable(attachedDatabase, alias);
+  }
+}
+
+class ListaCompras extends DataClass implements Insertable<ListaCompras> {
+  final int id;
+  final String nome;
+  final DateTime criadoEm;
+  const ListaCompras({
+    required this.id,
+    required this.nome,
+    required this.criadoEm,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nome'] = Variable<String>(nome);
+    map['criado_em'] = Variable<DateTime>(criadoEm);
+    return map;
+  }
+
+  ListasCompanion toCompanion(bool nullToAbsent) {
+    return ListasCompanion(
+      id: Value(id),
+      nome: Value(nome),
+      criadoEm: Value(criadoEm),
+    );
+  }
+
+  factory ListaCompras.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ListaCompras(
+      id: serializer.fromJson<int>(json['id']),
+      nome: serializer.fromJson<String>(json['nome']),
+      criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nome': serializer.toJson<String>(nome),
+      'criadoEm': serializer.toJson<DateTime>(criadoEm),
+    };
+  }
+
+  ListaCompras copyWith({int? id, String? nome, DateTime? criadoEm}) =>
+      ListaCompras(
+        id: id ?? this.id,
+        nome: nome ?? this.nome,
+        criadoEm: criadoEm ?? this.criadoEm,
+      );
+  ListaCompras copyWithCompanion(ListasCompanion data) {
+    return ListaCompras(
+      id: data.id.present ? data.id.value : this.id,
+      nome: data.nome.present ? data.nome.value : this.nome,
+      criadoEm: data.criadoEm.present ? data.criadoEm.value : this.criadoEm,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListaCompras(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, nome, criadoEm);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ListaCompras &&
+          other.id == this.id &&
+          other.nome == this.nome &&
+          other.criadoEm == this.criadoEm);
+}
+
+class ListasCompanion extends UpdateCompanion<ListaCompras> {
+  final Value<int> id;
+  final Value<String> nome;
+  final Value<DateTime> criadoEm;
+  const ListasCompanion({
+    this.id = const Value.absent(),
+    this.nome = const Value.absent(),
+    this.criadoEm = const Value.absent(),
+  });
+  ListasCompanion.insert({
+    this.id = const Value.absent(),
+    required String nome,
+    this.criadoEm = const Value.absent(),
+  }) : nome = Value(nome);
+  static Insertable<ListaCompras> custom({
+    Expression<int>? id,
+    Expression<String>? nome,
+    Expression<DateTime>? criadoEm,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nome != null) 'nome': nome,
+      if (criadoEm != null) 'criado_em': criadoEm,
+    });
+  }
+
+  ListasCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nome,
+    Value<DateTime>? criadoEm,
+  }) {
+    return ListasCompanion(
+      id: id ?? this.id,
+      nome: nome ?? this.nome,
+      criadoEm: criadoEm ?? this.criadoEm,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nome.present) {
+      map['nome'] = Variable<String>(nome.value);
+    }
+    if (criadoEm.present) {
+      map['criado_em'] = Variable<DateTime>(criadoEm.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ListasCompanion(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProdutosTable extends Produtos with TableInfo<$ProdutosTable, Produto> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProdutosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _listaIdMeta = const VerificationMeta(
+    'listaId',
+  );
+  @override
+  late final GeneratedColumn<int> listaId = GeneratedColumn<int>(
+    'lista_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES listas (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
+  @override
+  late final GeneratedColumn<String> nome = GeneratedColumn<String>(
+    'nome',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 200,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _quantidadeMeta = const VerificationMeta(
+    'quantidade',
+  );
+  @override
+  late final GeneratedColumn<String> quantidade = GeneratedColumn<String>(
+    'quantidade',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _compradoMeta = const VerificationMeta(
+    'comprado',
+  );
+  @override
+  late final GeneratedColumn<bool> comprado = GeneratedColumn<bool>(
+    'comprado',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("comprado" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _criadoEmMeta = const VerificationMeta(
+    'criadoEm',
+  );
+  @override
+  late final GeneratedColumn<DateTime> criadoEm = GeneratedColumn<DateTime>(
+    'criado_em',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    listaId,
+    nome,
+    quantidade,
+    comprado,
+    criadoEm,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'produtos';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Produto> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('lista_id')) {
+      context.handle(
+        _listaIdMeta,
+        listaId.isAcceptableOrUnknown(data['lista_id']!, _listaIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_listaIdMeta);
+    }
+    if (data.containsKey('nome')) {
+      context.handle(
+        _nomeMeta,
+        nome.isAcceptableOrUnknown(data['nome']!, _nomeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nomeMeta);
+    }
+    if (data.containsKey('quantidade')) {
+      context.handle(
+        _quantidadeMeta,
+        quantidade.isAcceptableOrUnknown(data['quantidade']!, _quantidadeMeta),
+      );
+    }
+    if (data.containsKey('comprado')) {
+      context.handle(
+        _compradoMeta,
+        comprado.isAcceptableOrUnknown(data['comprado']!, _compradoMeta),
+      );
+    }
+    if (data.containsKey('criado_em')) {
+      context.handle(
+        _criadoEmMeta,
+        criadoEm.isAcceptableOrUnknown(data['criado_em']!, _criadoEmMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Produto map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Produto(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      listaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}lista_id'],
+      )!,
+      nome: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nome'],
+      )!,
+      quantidade: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quantidade'],
+      ),
+      comprado: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}comprado'],
+      )!,
+      criadoEm: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}criado_em'],
+      )!,
+    );
+  }
+
+  @override
+  $ProdutosTable createAlias(String alias) {
+    return $ProdutosTable(attachedDatabase, alias);
+  }
+}
+
+class Produto extends DataClass implements Insertable<Produto> {
+  final int id;
+  final int listaId;
+  final String nome;
+
+  /// Texto livre, como "2 kg" ou "1 caixa".
+  final String? quantidade;
+  final bool comprado;
+  final DateTime criadoEm;
+  const Produto({
+    required this.id,
+    required this.listaId,
+    required this.nome,
+    this.quantidade,
+    required this.comprado,
+    required this.criadoEm,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['lista_id'] = Variable<int>(listaId);
+    map['nome'] = Variable<String>(nome);
+    if (!nullToAbsent || quantidade != null) {
+      map['quantidade'] = Variable<String>(quantidade);
+    }
+    map['comprado'] = Variable<bool>(comprado);
+    map['criado_em'] = Variable<DateTime>(criadoEm);
+    return map;
+  }
+
+  ProdutosCompanion toCompanion(bool nullToAbsent) {
+    return ProdutosCompanion(
+      id: Value(id),
+      listaId: Value(listaId),
+      nome: Value(nome),
+      quantidade: quantidade == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantidade),
+      comprado: Value(comprado),
+      criadoEm: Value(criadoEm),
+    );
+  }
+
+  factory Produto.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Produto(
+      id: serializer.fromJson<int>(json['id']),
+      listaId: serializer.fromJson<int>(json['listaId']),
+      nome: serializer.fromJson<String>(json['nome']),
+      quantidade: serializer.fromJson<String?>(json['quantidade']),
+      comprado: serializer.fromJson<bool>(json['comprado']),
+      criadoEm: serializer.fromJson<DateTime>(json['criadoEm']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'listaId': serializer.toJson<int>(listaId),
+      'nome': serializer.toJson<String>(nome),
+      'quantidade': serializer.toJson<String?>(quantidade),
+      'comprado': serializer.toJson<bool>(comprado),
+      'criadoEm': serializer.toJson<DateTime>(criadoEm),
+    };
+  }
+
+  Produto copyWith({
+    int? id,
+    int? listaId,
+    String? nome,
+    Value<String?> quantidade = const Value.absent(),
+    bool? comprado,
+    DateTime? criadoEm,
+  }) => Produto(
+    id: id ?? this.id,
+    listaId: listaId ?? this.listaId,
+    nome: nome ?? this.nome,
+    quantidade: quantidade.present ? quantidade.value : this.quantidade,
+    comprado: comprado ?? this.comprado,
+    criadoEm: criadoEm ?? this.criadoEm,
+  );
+  Produto copyWithCompanion(ProdutosCompanion data) {
+    return Produto(
+      id: data.id.present ? data.id.value : this.id,
+      listaId: data.listaId.present ? data.listaId.value : this.listaId,
+      nome: data.nome.present ? data.nome.value : this.nome,
+      quantidade: data.quantidade.present
+          ? data.quantidade.value
+          : this.quantidade,
+      comprado: data.comprado.present ? data.comprado.value : this.comprado,
+      criadoEm: data.criadoEm.present ? data.criadoEm.value : this.criadoEm,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Produto(')
+          ..write('id: $id, ')
+          ..write('listaId: $listaId, ')
+          ..write('nome: $nome, ')
+          ..write('quantidade: $quantidade, ')
+          ..write('comprado: $comprado, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, listaId, nome, quantidade, comprado, criadoEm);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Produto &&
+          other.id == this.id &&
+          other.listaId == this.listaId &&
+          other.nome == this.nome &&
+          other.quantidade == this.quantidade &&
+          other.comprado == this.comprado &&
+          other.criadoEm == this.criadoEm);
+}
+
+class ProdutosCompanion extends UpdateCompanion<Produto> {
+  final Value<int> id;
+  final Value<int> listaId;
+  final Value<String> nome;
+  final Value<String?> quantidade;
+  final Value<bool> comprado;
+  final Value<DateTime> criadoEm;
+  const ProdutosCompanion({
+    this.id = const Value.absent(),
+    this.listaId = const Value.absent(),
+    this.nome = const Value.absent(),
+    this.quantidade = const Value.absent(),
+    this.comprado = const Value.absent(),
+    this.criadoEm = const Value.absent(),
+  });
+  ProdutosCompanion.insert({
+    this.id = const Value.absent(),
+    required int listaId,
+    required String nome,
+    this.quantidade = const Value.absent(),
+    this.comprado = const Value.absent(),
+    this.criadoEm = const Value.absent(),
+  }) : listaId = Value(listaId),
+       nome = Value(nome);
+  static Insertable<Produto> custom({
+    Expression<int>? id,
+    Expression<int>? listaId,
+    Expression<String>? nome,
+    Expression<String>? quantidade,
+    Expression<bool>? comprado,
+    Expression<DateTime>? criadoEm,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (listaId != null) 'lista_id': listaId,
+      if (nome != null) 'nome': nome,
+      if (quantidade != null) 'quantidade': quantidade,
+      if (comprado != null) 'comprado': comprado,
+      if (criadoEm != null) 'criado_em': criadoEm,
+    });
+  }
+
+  ProdutosCompanion copyWith({
+    Value<int>? id,
+    Value<int>? listaId,
+    Value<String>? nome,
+    Value<String?>? quantidade,
+    Value<bool>? comprado,
+    Value<DateTime>? criadoEm,
+  }) {
+    return ProdutosCompanion(
+      id: id ?? this.id,
+      listaId: listaId ?? this.listaId,
+      nome: nome ?? this.nome,
+      quantidade: quantidade ?? this.quantidade,
+      comprado: comprado ?? this.comprado,
+      criadoEm: criadoEm ?? this.criadoEm,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (listaId.present) {
+      map['lista_id'] = Variable<int>(listaId.value);
+    }
+    if (nome.present) {
+      map['nome'] = Variable<String>(nome.value);
+    }
+    if (quantidade.present) {
+      map['quantidade'] = Variable<String>(quantidade.value);
+    }
+    if (comprado.present) {
+      map['comprado'] = Variable<bool>(comprado.value);
+    }
+    if (criadoEm.present) {
+      map['criado_em'] = Variable<DateTime>(criadoEm.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProdutosCompanion(')
+          ..write('id: $id, ')
+          ..write('listaId: $listaId, ')
+          ..write('nome: $nome, ')
+          ..write('quantidade: $quantidade, ')
+          ..write('comprado: $comprado, ')
+          ..write('criadoEm: $criadoEm')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ItensTable itens = $ItensTable(this);
   late final $LembretesTable lembretes = $LembretesTable(this);
+  late final $ListasTable listas = $ListasTable(this);
+  late final $ProdutosTable produtos = $ProdutosTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [itens, lembretes];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    itens,
+    lembretes,
+    listas,
+    produtos,
+  ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
     WritePropagation(
@@ -979,6 +1644,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('lembretes', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'listas',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('produtos', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -1678,6 +2350,576 @@ typedef $$LembretesTableProcessedTableManager =
       Lembrete,
       PrefetchHooks Function({bool itemId})
     >;
+typedef $$ListasTableCreateCompanionBuilder = ListasCompanion Function({
+  Value<int> id,
+  required String nome,
+  Value<DateTime> criadoEm,
+});
+typedef $$ListasTableUpdateCompanionBuilder = ListasCompanion Function({
+  Value<int> id,
+  Value<String> nome,
+  Value<DateTime> criadoEm,
+});
+
+final class $$ListasTableReferences
+    extends BaseReferences<_$AppDatabase, $ListasTable, ListaCompras> {
+  $$ListasTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$ProdutosTable, List<Produto>> _produtosRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.produtos,
+    aliasName: 'listas__id__produtos__lista_id',
+  );
+
+  $$ProdutosTableProcessedTableManager get produtosRefs {
+    final manager = $$ProdutosTableTableManager(
+      $_db,
+      $_db.produtos,
+    ).filter((f) => f.listaId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_produtosRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ListasTableFilterComposer
+    extends Composer<_$AppDatabase, $ListasTable> {
+  $$ListasTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nome => $composableBuilder(
+    column: $table.nome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> produtosRefs(
+    Expression<bool> Function($$ProdutosTableFilterComposer f) f,
+  ) {
+    final $$ProdutosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.produtos,
+      getReferencedColumn: (t) => t.listaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProdutosTableFilterComposer(
+            $db: $db,
+            $table: $db.produtos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ListasTableOrderingComposer
+    extends Composer<_$AppDatabase, $ListasTable> {
+  $$ListasTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nome => $composableBuilder(
+    column: $table.nome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ListasTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ListasTable> {
+  $$ListasTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nome =>
+      $composableBuilder(column: $table.nome, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get criadoEm =>
+      $composableBuilder(column: $table.criadoEm, builder: (column) => column);
+
+  Expression<T> produtosRefs<T extends Object>(
+    Expression<T> Function($$ProdutosTableAnnotationComposer a) f,
+  ) {
+    final $$ProdutosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.produtos,
+      getReferencedColumn: (t) => t.listaId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProdutosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.produtos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ListasTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ListasTable,
+          ListaCompras,
+          $$ListasTableFilterComposer,
+          $$ListasTableOrderingComposer,
+          $$ListasTableAnnotationComposer,
+          $$ListasTableCreateCompanionBuilder,
+          $$ListasTableUpdateCompanionBuilder,
+          (ListaCompras, $$ListasTableReferences),
+          ListaCompras,
+          PrefetchHooks Function({bool produtosRefs})
+        > {
+  $$ListasTableTableManager(_$AppDatabase db, $ListasTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ListasTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ListasTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ListasTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> nome = const Value.absent(),
+            Value<DateTime> criadoEm = const Value.absent(),
+          }) => ListasCompanion(id: id, nome: nome, criadoEm: criadoEm),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String nome,
+            Value<DateTime> criadoEm = const Value.absent(),
+          }) => ListasCompanion.insert(id: id, nome: nome, criadoEm: criadoEm),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ListasTable, ListaCompras>(table),
+                  $$ListasTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({produtosRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (produtosRefs) db.produtos],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (produtosRefs)
+                    await $_getPrefetchedData<
+                      ListaCompras,
+                      $ListasTable,
+                      Produto
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ListasTableReferences
+                          ._produtosRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ListasTableReferences(db, table, p0).produtosRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.listaId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ListasTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ListasTable,
+      ListaCompras,
+      $$ListasTableFilterComposer,
+      $$ListasTableOrderingComposer,
+      $$ListasTableAnnotationComposer,
+      $$ListasTableCreateCompanionBuilder,
+      $$ListasTableUpdateCompanionBuilder,
+      (ListaCompras, $$ListasTableReferences),
+      ListaCompras,
+      PrefetchHooks Function({bool produtosRefs})
+    >;
+typedef $$ProdutosTableCreateCompanionBuilder = ProdutosCompanion Function({
+  Value<int> id,
+  required int listaId,
+  required String nome,
+  Value<String?> quantidade,
+  Value<bool> comprado,
+  Value<DateTime> criadoEm,
+});
+typedef $$ProdutosTableUpdateCompanionBuilder = ProdutosCompanion Function({
+  Value<int> id,
+  Value<int> listaId,
+  Value<String> nome,
+  Value<String?> quantidade,
+  Value<bool> comprado,
+  Value<DateTime> criadoEm,
+});
+
+final class $$ProdutosTableReferences
+    extends BaseReferences<_$AppDatabase, $ProdutosTable, Produto> {
+  $$ProdutosTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ListasTable _listaIdTable(_$AppDatabase db) =>
+      db.listas.createAlias('produtos__lista_id__listas__id');
+
+  $$ListasTableProcessedTableManager get listaId {
+    final $_column = $_itemColumn<int>('lista_id')!;
+
+    final manager = $$ListasTableTableManager(
+      $_db,
+      $_db.listas,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_listaIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProdutosTableFilterComposer
+    extends Composer<_$AppDatabase, $ProdutosTable> {
+  $$ProdutosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nome => $composableBuilder(
+    column: $table.nome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get quantidade => $composableBuilder(
+    column: $table.quantidade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get comprado => $composableBuilder(
+    column: $table.comprado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ListasTableFilterComposer get listaId {
+    final $$ListasTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.listaId,
+      referencedTable: $db.listas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ListasTableFilterComposer(
+            $db: $db,
+            $table: $db.listas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProdutosTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProdutosTable> {
+  $$ProdutosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nome => $composableBuilder(
+    column: $table.nome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quantidade => $composableBuilder(
+    column: $table.quantidade,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get comprado => $composableBuilder(
+    column: $table.comprado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get criadoEm => $composableBuilder(
+    column: $table.criadoEm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ListasTableOrderingComposer get listaId {
+    final $$ListasTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.listaId,
+      referencedTable: $db.listas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ListasTableOrderingComposer(
+            $db: $db,
+            $table: $db.listas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProdutosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProdutosTable> {
+  $$ProdutosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nome =>
+      $composableBuilder(column: $table.nome, builder: (column) => column);
+
+  GeneratedColumn<String> get quantidade => $composableBuilder(
+    column: $table.quantidade,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get comprado =>
+      $composableBuilder(column: $table.comprado, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get criadoEm =>
+      $composableBuilder(column: $table.criadoEm, builder: (column) => column);
+
+  $$ListasTableAnnotationComposer get listaId {
+    final $$ListasTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.listaId,
+      referencedTable: $db.listas,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ListasTableAnnotationComposer(
+            $db: $db,
+            $table: $db.listas,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProdutosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ProdutosTable,
+          Produto,
+          $$ProdutosTableFilterComposer,
+          $$ProdutosTableOrderingComposer,
+          $$ProdutosTableAnnotationComposer,
+          $$ProdutosTableCreateCompanionBuilder,
+          $$ProdutosTableUpdateCompanionBuilder,
+          (Produto, $$ProdutosTableReferences),
+          Produto,
+          PrefetchHooks Function({bool listaId})
+        > {
+  $$ProdutosTableTableManager(_$AppDatabase db, $ProdutosTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProdutosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProdutosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProdutosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> listaId = const Value.absent(),
+                Value<String> nome = const Value.absent(),
+                Value<String?> quantidade = const Value.absent(),
+                Value<bool> comprado = const Value.absent(),
+                Value<DateTime> criadoEm = const Value.absent(),
+              }) => ProdutosCompanion(
+                id: id,
+                listaId: listaId,
+                nome: nome,
+                quantidade: quantidade,
+                comprado: comprado,
+                criadoEm: criadoEm,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int listaId,
+                required String nome,
+                Value<String?> quantidade = const Value.absent(),
+                Value<bool> comprado = const Value.absent(),
+                Value<DateTime> criadoEm = const Value.absent(),
+              }) => ProdutosCompanion.insert(
+                id: id,
+                listaId: listaId,
+                nome: nome,
+                quantidade: quantidade,
+                comprado: comprado,
+                criadoEm: criadoEm,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ProdutosTable, Produto>(table),
+                  $$ProdutosTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({listaId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (listaId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.listaId,
+                        referencedTable: $$ProdutosTableReferences
+                            ._listaIdTable(db),
+                        referencedColumn: $$ProdutosTableReferences
+                            ._listaIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProdutosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ProdutosTable,
+      Produto,
+      $$ProdutosTableFilterComposer,
+      $$ProdutosTableOrderingComposer,
+      $$ProdutosTableAnnotationComposer,
+      $$ProdutosTableCreateCompanionBuilder,
+      $$ProdutosTableUpdateCompanionBuilder,
+      (Produto, $$ProdutosTableReferences),
+      Produto,
+      PrefetchHooks Function({bool listaId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1686,4 +2928,8 @@ class $AppDatabaseManager {
       $$ItensTableTableManager(_db, _db.itens);
   $$LembretesTableTableManager get lembretes =>
       $$LembretesTableTableManager(_db, _db.lembretes);
+  $$ListasTableTableManager get listas =>
+      $$ListasTableTableManager(_db, _db.listas);
+  $$ProdutosTableTableManager get produtos =>
+      $$ProdutosTableTableManager(_db, _db.produtos);
 }

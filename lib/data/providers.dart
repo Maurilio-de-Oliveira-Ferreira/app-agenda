@@ -40,3 +40,15 @@ final sincronizarLembretesProvider = Provider<void>((ref) {
       );
   ref.onDispose(sub.cancel);
 });
+
+final listasProvider = StreamProvider<List<ResumoLista>>((ref) {
+  return ref.watch(databaseProvider).watchListas();
+});
+
+final listaProvider = StreamProvider.autoDispose.family<ListaCompras?, int>((ref, id) {
+  return ref.watch(databaseProvider).watchLista(id);
+});
+
+final produtosProvider = StreamProvider.autoDispose.family<List<Produto>, int>((ref, listaId) {
+  return ref.watch(databaseProvider).watchProdutos(listaId);
+});
