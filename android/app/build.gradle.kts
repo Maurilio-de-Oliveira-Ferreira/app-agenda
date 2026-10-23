@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -31,11 +33,25 @@ android {
         versionName = flutter.versionName
     }
 
+    // A chave fixa vem do segredo ASSINATURA_APK do GitHub (ver .github/workflows/apk.yml).
+    // Com ela todo APK tem a mesma assinatura e atualiza por cima sem perder dados.
+    val chave = rootProject.file("key.properties")
+    signingConfigs {
+        if (chave.exists()) {
+            val props = Properties().apply { chave.inputStream().use { load(it) } }
+            create("fixa") {
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("password")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("password")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sem a chave fixa (ex.: no computador) usa a chave de depuração.
+            signingConfig = signingConfigs.findByName("fixa") ?: signingConfigs.getByName("debug")
         }
     }
 }
