@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database.dart';
 import '../data/providers.dart';
+import '../notificacoes/repeticao.dart';
 import '../util/datas.dart';
 
 /// Tela para criar ou editar uma tarefa ou um evento.
@@ -37,6 +38,12 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
   late DateTime _inicio;
   late DateTime _fim;
 
+  bool _lembrar = false;
+  late DateTime _quando;
+  Frequencia _frequencia = Frequencia.nenhuma;
+  final _intervalo = TextEditingController(text: '1');
+  int _soneca = 10;
+
   bool get _evento => widget.tipo == TipoItem.evento;
   bool get _editando => widget.item != null;
 
@@ -55,12 +62,37 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       // No banco o fim de um evento de dia inteiro é o início do dia seguinte.
       _fim = _fim.subtract(const Duration(days: 1));
     }
+
+    _quando = _horarioSugerido();
+    if (item != null) _carregarLembrete(item.id);
+  }
+
+  Future<void> _carregarLembrete(int itemId) async {
+    final l = await ref.read(databaseProvider).lembreteDoItem(itemId);
+    if (l == null || !mounted) return;
+    setState(() {
+      _lembrar = true;
+      _quando = l.quando;
+      _frequencia = l.frequencia;
+      _intervalo.text = '${l.intervalo}';
+      _soneca = l.sonecaMinutos;
+    });
+  }
+
+  /// Horário inicial do lembrete: o prazo da tarefa ou o início do evento.
+  DateTime _horarioSugerido() {
+    if (_evento && _diaInteiro) {
+      return DateTime(_inicio.year, _inicio.month, _inicio.day, 9);
+    }
+    if (_evento || _temPrazo) return _inicio;
+    return _proximaHoraCheia(null);
   }
 
   @override
   void dispose() {
     _titulo.dispose();
     _descricao.dispose();
+    _intervalo.dispose();
     super.dispose();
   }
 
@@ -107,6 +139,9 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
             ),
             const SizedBox(height: 8),
             if (_evento) ..._camposEvento() else ..._camposTarefa(),
+            const Divider(height: 32),
+            ..._camposLembrete(),
+            const SizedBox(height: 72),
           ],
         ),
       ),
@@ -160,6 +195,90 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
         ),
       ];
 
+  List<Widget> _camposLembrete() => [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.notifications_outlined),
+          title: const Text('Lembrete'),
+          subtitle: const Text('Avisar com uma notificação'),
+          value: _lembrar,
+          onChanged: (v) async {
+            setState(() {
+              _lembrar = v;
+              if (v) _quando = _horarioSugerido();
+            });
+            if (v && !await ref.read(agendadorProvider).pedirPermissao() && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Sem permissão de notificações, o lembrete não vai aparecer. '
+                    'Ative em Configurações > Apps > Agenda > Notificações.'),
+              ));
+            }
+          },
+        ),
+        if (_lembrar) ...[
+          _SeletorDataHora(
+            rotulo: 'Avisar',
+            valor: _quando,
+            onChanged: (v) => setState(() => _quando = v),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<Frequencia>(
+            initialValue: _frequencia,
+            decoration: const InputDecoration(labelText: 'Repetir', border: OutlineInputBorder()),
+            items: [
+              for (final f in Frequencia.values)
+                DropdownMenuItem(
+                  value: f,
+                  child: Text(switch (f) {
+                    Frequencia.nenhuma => 'Não repetir',
+                    Frequencia.minutos => 'De minutos em minutos',
+                    Frequencia.horas => 'De hora em hora',
+                    Frequencia.dias => 'Diariamente',
+                    Frequencia.semanas => 'Semanalmente',
+                    Frequencia.meses => 'Mensalmente',
+                  }),
+                ),
+            ],
+            onChanged: (f) => setState(() => _frequencia = f!),
+          ),
+          if (_frequencia != Frequencia.nenhuma) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Text('A cada'),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 72,
+                  child: TextFormField(
+                    controller: _intervalo,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                    onChanged: (_) => setState(() {}),
+                    validator: (v) {
+                      final n = int.tryParse(v ?? '');
+                      return n == null || n < 1 || n > 999 ? '1 a 999' : null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(nomeDaUnidade(_frequencia, int.tryParse(_intervalo.text) ?? 2)),
+              ],
+            ),
+          ],
+          const SizedBox(height: 16),
+          DropdownButtonFormField<int>(
+            initialValue: _soneca,
+            decoration: const InputDecoration(labelText: 'Soneca (botão "Adiar")', border: OutlineInputBorder()),
+            items: [
+              for (final m in const [5, 10, 15, 30, 60])
+                DropdownMenuItem(value: m, child: Text(m == 60 ? '1 hora' : '$m minutos')),
+            ],
+            onChanged: (m) => setState(() => _soneca = m!),
+          ),
+        ],
+      ];
+
   Future<void> _salvar() async {
     if (!_form.currentState!.validate()) return;
 
@@ -178,6 +297,14 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
       inicio = _inicio;
     }
 
+    final intervalo = int.tryParse(_intervalo.text) ?? 1;
+    if (_lembrar && _frequencia == Frequencia.nenhuma && !_quando.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('O horário do lembrete já passou.')),
+      );
+      return;
+    }
+
     final descricao = _descricao.text.trim();
     final dados = ItensCompanion(
       tipo: Value(widget.tipo),
@@ -189,11 +316,25 @@ class _ItemFormPageState extends ConsumerState<ItemFormPage> {
     );
 
     final db = ref.read(databaseProvider);
+    final int id;
     if (_editando) {
-      await db.atualizar(widget.item!.id, dados);
+      id = widget.item!.id;
+      await db.atualizar(id, dados);
     } else {
-      await db.criar(dados);
+      id = await db.criar(dados);
     }
+    await db.definirLembrete(
+      id,
+      _lembrar
+          ? LembretesCompanion.insert(
+              itemId: id,
+              quando: _quando,
+              frequencia: Value(_frequencia),
+              intervalo: Value(_frequencia == Frequencia.nenhuma ? 1 : intervalo),
+              sonecaMinutos: Value(_soneca),
+            )
+          : null,
+    );
     if (mounted) Navigator.of(context).pop();
   }
 
